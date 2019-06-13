@@ -131,6 +131,10 @@ public class Composition {
      *
      * You can get compositions from http://virtualpiano.net/
      *
+     * @apiNote This method should be enclosed inside if-else statement
+     * because the return value is false if there was an error.
+     * If the validity of this method is not checked, there will
+     * be problems further down the code, most notably NullPointerException, for example
      *
      * @param filePath File path where the composition is located
      * @return Returns true if operation ended successfully
@@ -271,8 +275,11 @@ public class Composition {
 
     public static void main(String[] args) {
         Composition cm = new Composition();
-        cm.readFromFile("./resource/input/jingle_bells.txt");
-        System.out.println(cm);
+        if(cm.readFromFile("./resource/input/jingle_bellss.txt")) {
+            System.out.println(cm);
+        } else {
+            System.out.println("There was en error reading the file");
+        }
     }
 
 }

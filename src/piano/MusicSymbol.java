@@ -36,5 +36,12 @@ public abstract class MusicSymbol {
 
     /// Abstract methods
 //    public abstract int getMidiData();
+
+    /**
+     * This abstract overrides in child classes because each child class
+     * has its own way of printing itself out
+     *
+     * @return Returns the textual format of a child class
+     */
     protected abstract String myString();
 }

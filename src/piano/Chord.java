@@ -48,7 +48,10 @@ public class Chord extends MusicSymbol {
         }
     }
 
-
+    /**
+     * Overriden method from MysicSymbol.class
+     * @return Text format for chord
+     */
     protected String myString(){
         StringBuilder sb = new StringBuilder("[");
         for (Note n :

@@ -30,7 +30,10 @@ public class Note extends MusicSymbol {
     }
 
 
-
+    /**
+     * Overriden myString from MusicSymbol.class
+     * @return TextFormat for Note
+     */
     protected String myString(){
         return name;
     };
