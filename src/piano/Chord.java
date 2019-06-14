@@ -61,4 +61,15 @@ public class Chord extends MusicSymbol {
         sb.append("]");
         return sb.toString();
     }
+
+
+    public ArrayList<Integer> getNotes () {
+        ArrayList<Integer> temp = new ArrayList<>();
+        for (Note midi :
+                chordNotes) {
+            temp.add(midi.getMidiValue());
+        }
+
+        return temp;
+    }
 }

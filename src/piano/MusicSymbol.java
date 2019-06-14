@@ -2,6 +2,8 @@ package piano;
 
 //import org.jetbrains.annotations.Contract;
 
+import java.util.ArrayList;
+
 public abstract class MusicSymbol {
     /// Fields
     protected Duration symbDuration;
@@ -15,7 +17,7 @@ public abstract class MusicSymbol {
     }
     /**
      * Gets the symbol duration
-     * @return
+     * @return Returns the Duration object which tells us what type of note/chord/pause this is
      */
     public Duration getSymbDuration() {
         return  symbDuration;
@@ -23,7 +25,7 @@ public abstract class MusicSymbol {
 
     /**
      * Changes the duration of MusicSymbol
-     * @param newDuration
+     * @param newDuration Duration object used to change the duration of this MusicSymbol
      */
     public void setSymbDuration(Duration newDuration) {
         symbDuration = newDuration;
@@ -44,4 +46,12 @@ public abstract class MusicSymbol {
      * @return Returns the textual format of a child class
      */
     protected abstract String myString();
+
+    /**
+     * This abstract overrides in child classes because it is used to return the
+     * values of its notes
+     * @return ArrayList<Integer> Object which is actually all Midi values for
+     * notes
+     */
+    public abstract ArrayList<Integer> getNotes();
 }

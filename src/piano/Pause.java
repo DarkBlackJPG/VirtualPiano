@@ -1,5 +1,7 @@
 package piano;
 
+import java.util.ArrayList;
+
 public class Pause extends MusicSymbol {
 
 
@@ -18,5 +20,10 @@ public class Pause extends MusicSymbol {
      */
     protected String myString(){
         return (symbDuration.getMyDuration() == Duration._Duration.QUARTER) ? " ||P|| " : " |p| ";
+    }
+
+
+    public ArrayList<Integer> getNotes () {
+        return null;
     }
 }

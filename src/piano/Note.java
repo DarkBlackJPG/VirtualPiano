@@ -1,5 +1,7 @@
 package piano;
 
+import java.util.ArrayList;
+
 public class Note extends MusicSymbol {
 
     private int midiValue;
@@ -7,6 +9,29 @@ public class Note extends MusicSymbol {
     private String name;
 
 
+    public int getMidiValue() {
+        return midiValue;
+    }
+
+    public void setMidiValue(int midiValue) {
+        this.midiValue = midiValue;
+    }
+
+    public char getKeyboardChar() {
+        return keyboardChar;
+    }
+
+    public void setKeyboardChar(char keyboardChar) {
+        this.keyboardChar = keyboardChar;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public Note(char noteChar, Duration symbolDuration) {
         super(symbolDuration);
@@ -37,4 +62,14 @@ public class Note extends MusicSymbol {
     protected String myString(){
         return name;
     };
+
+
+    /**
+     * @return Returns the integer which represents the MIDI note code
+     */
+    public ArrayList<Integer> getNotes() {
+        ArrayList<Integer> temp = new ArrayList<>();
+        temp.add(midiValue);
+        return temp;
+    }
 }
