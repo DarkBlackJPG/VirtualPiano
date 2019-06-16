@@ -34,6 +34,139 @@ class CompositionNotLoadedException extends Exception {
     }
 }
 
+/*
+
+All midi instruments
+
+1. 	Acoustic Grand Piano
+2. 	Bright Acoustic Piano
+3. 	Electric Grand Piano
+4. 	Honky-tonk Piano
+5. 	Electric Piano 1
+6. 	Electric Piano 2
+7. 	Harpsichord
+8. 	Clavi
+9. 	Celesta
+10. Glockenspiel
+11. 	Music Box
+12. 	Vibraphone
+13. 	Marimba
+14. 	Xylophone
+15. 	Tubular Bells
+16. 	Dulcimer
+17. 	Drawbar Organ
+18. 	Percussive Organ
+19. 	Rock Organ
+20. 	Church Organ
+21. 	Reed Organ
+22. 	Accordion
+23. 	Harmonica
+24. 	Tango Accordion
+25. 	Acoustic Guitar (nylon)
+26. 	Acoustic Guitar (steel)
+27. 	Electric Guitar (jazz)
+28. 	Electric Guitar (clean)
+29. 	Electric Guitar (muted)
+30. 	Overdriven Guitar
+31. 	Distortion Guitar
+32. 	Guitar harmonics
+33. 	Acoustic Bass
+34. 	Electric Bass (finger)
+35. 	Electric Bass (pick)
+36. 	Fretless Bass
+37. 	Slap Bass 1
+38. 	Slap Bass 2
+39. 	Synth Bass 1
+40. 	Synth Bass 2
+41. 	Violin
+42. 	Viola
+43. 	Cello
+44. 	Contrabass
+45. 	Tremolo Strings
+46. 	Pizzicato Strings
+47. 	Orchestral Harp
+48. 	Timpani
+49. 	String Ensemble 1
+50. 	String Ensemble 2
+51. 	SynthStrings 1
+52. 	SynthStrings 2
+53. 	Choir Aahs
+54. 	Voice Oohs
+55. 	Synth Voice
+56. 	Orchestra Hit
+57. 	Trumpet
+58. 	Trombone
+59. 	Tuba
+60. 	Muted Trumpet
+61. 	French Horn
+62. 	Brass Section
+63. 	SynthBrass 1
+64. 	SynthBrass 2
+65. 	Soprano Sax
+66. 	Alto Sax
+67. 	Tenor Sax
+68. 	Baritone Sax
+69. 	Oboe
+70. 	English Horn
+71. 	Bassoon
+72. 	Clarinet
+73. 	Piccolo
+74. 	Flute
+75. 	Recorder
+76. 	Pan Flute
+77. 	Blown Bottle
+78. 	Shakuhachi
+79. 	Whistle
+80. 	Ocarina
+81. 	Lead 1 (square)
+82. 	Lead 2 (sawtooth)
+83. 	Lead 3 (calliope)
+84. 	Lead 4 (chiff)
+85. 	Lead 5 (charang)
+86. 	Lead 6 (voice)
+87. 	Lead 7 (fifths)
+88. 	Lead 8 (bass + lead)
+89. 	Pad 1 (new age)
+90. 	Pad 2 (warm)
+91. 	Pad 3 (polysynth)
+92. 	Pad 4 (choir)
+93. 	Pad 5 (bowed)
+94. 	Pad 6 (metallic)
+95. 	Pad 7 (halo)
+96. 	Pad 8 (sweep)
+97. 	FX 1 (rain)
+98. 	FX 2 (soundtrack)
+99. 	FX 3 (crystal)
+100. 	FX 4 (atmosphere)
+101. 	FX 5 (brightness)
+102. 	FX 6 (goblins)
+103. 	FX 7 (echoes)
+104. 	FX 8 (sci-fi)
+105. 	Sitar
+106. 	Banjo
+107. 	Shamisen
+108. 	Koto
+109. 	Kalimba
+110. 	Bag pipe
+111. 	Fiddle
+112. 	Shanai
+113. 	Tinkle Bell
+114. 	Agogo
+115. 	Steel Drums
+116. 	Woodblock
+117. 	Taiko Drum
+118. 	Melodic Tom
+119. 	Synth Drum
+120. 	Reverse Cymbal
+121. 	Guitar Fret Noise
+122. 	Breath Noise
+123. 	Seashore
+124. 	Bird Tweet
+125. 	Telephone Ring
+126. 	Helicopter
+127. 	Applause
+128. 	Gunshot
+ */
 
 public class Player {
     /**
@@ -183,6 +316,9 @@ public class Player {
         if(myComposition != null){
             ArrayList<MusicSymbol> compositionNotes = myComposition.getMyNotes();
 
+            final int quarterTick = 300;
+            final int eightTick = 150;
+
             for (MusicSymbol ms :
                     compositionNotes) {
 
@@ -191,11 +327,11 @@ public class Player {
 
                 try {
                     if (ms instanceof Note) {
-                        play(allNotes.get(0), (noteDuration.getDurationValue() == 4 ? 250 : 125));
+                        play(allNotes.get(0), (noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
                     } else if (ms instanceof Pause) {
-                        Thread.sleep((noteDuration.getDurationValue() == 4 ? 250 : 125));
+                        Thread.sleep((noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
                     } else if (ms instanceof Chord) {
-                        playChord(allNotes, (noteDuration.getDurationValue() == 4 ? 250 : 125));
+                        playChord(allNotes, (noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -205,12 +341,29 @@ public class Player {
     }
 
 
+    /**
+     *  This method is called when you need to export to MIDI file. The output filename will
+     *  be set to the Filename of the .txt notes file. If you export your recording, you will be
+     *  asked to name your session
+     *
+     *  This method MUST set the meta data (messages) to the midi format like Sysex, Track name, tempo
+     *  etc.
+     *
+     *  {@link MidiEvent}'s second constructor parameter is used to tell the exporter the tick value
+     *
+     *
+     * @throws CompositionNotLoadedException Composition myst be loaded to player! the exporter will throw this
+     *                                       exception when the composition is not set or if there was an error with
+     *                                       the file
+     * @throws InvalidMidiDataException {@link InvalidMidiDataException}
+     * @throws IOException {@link IOException}
+     */
     public void exportToMidi()
 
             throws  CompositionNotLoadedException,
                     InvalidMidiDataException,
                     IOException {
-        if(myComposition == null){
+        if(myComposition == null || myComposition.getMyNotes().size() <= 0){
             throw new CompositionNotLoadedException();
         }
 
@@ -224,47 +377,47 @@ public class Player {
         byte[] b = {(byte)0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte)0xF7};
         SysexMessage sm = new SysexMessage();
         sm.setMessage(b, 6);
-        MidiEvent me = new MidiEvent(sm,(long)0);
-        myTrack.add(me);
+        MidiEvent midiEvent = new MidiEvent(sm,(long)0);
+        myTrack.add(midiEvent);
 
         /*
          * This code sets the tempo with a meta message
          */
-        MetaMessage mt = new MetaMessage();
+        MetaMessage metaMessage = new MetaMessage();
         byte[] bt = {0x02, (byte)0x00, 0x00};
-        mt.setMessage(0x51 ,bt, 3);
-        me = new MidiEvent(mt,(long)0);
-        myTrack.add(me);
+        metaMessage.setMessage(0x51 ,bt, 3);
+        midiEvent = new MidiEvent(metaMessage,(long)0);
+        myTrack.add(midiEvent);
 
         /*
          * This code sets the track name
          */
 
-        mt = new MetaMessage();
+        metaMessage = new MetaMessage();
         String TrackName = Composition.extractFilename(myComposition.getMyCompositionTxtFile());
-        mt.setMessage(0x03 ,TrackName.getBytes(), TrackName.length());
-        me = new MidiEvent(mt,(long)0);
-        myTrack.add(me);
+        metaMessage.setMessage(0x03 ,TrackName.getBytes(), TrackName.length());
+        midiEvent = new MidiEvent(metaMessage,(long)0);
+        myTrack.add(midiEvent);
 
         /*
           * This code sets omni mode -> this refers to the idea
           * that the midi file will respond to any instrument
           * on any channel
          */
-        ShortMessage mm = new ShortMessage();
-        mm.setMessage(0xB0, 0x7D,0x00);
-        me = new MidiEvent(mm,(long)0);
-        myTrack.add(me);
+        ShortMessage message = new ShortMessage();
+        message.setMessage(0xB0, 0x7D,0x00);
+        midiEvent = new MidiEvent(message,(long)0);
+        myTrack.add(midiEvent);
 
 
         /*
          * This code sets the instrument
          */
 
-        mm = new ShortMessage();
-        mm.setMessage(0xC0, 0x00, 0x00);
-        me = new MidiEvent(mm,(long)0);
-        myTrack.add(me);
+        message = new ShortMessage();
+        message.setMessage(0xC0, myInstrument, 0x00);
+        midiEvent = new MidiEvent(message,(long)0);
+        myTrack.add(midiEvent);
 
 
         ArrayList<MusicSymbol> compositionSymbols = myComposition.getMyNotes();
@@ -282,10 +435,10 @@ public class Player {
                 /*
                  * Adds the noteOn Event to the track
                  */
-                mm = new ShortMessage();
-                mm.setMessage(0x90, ((Note) ms).getMidiValue(), 0x60);
-                me = new MidiEvent(mm, (long) currentTick);
-                myTrack.add(me);
+                message = new ShortMessage();
+                message.setMessage(0x90, ((Note) ms).getMidiValue(), 0x60);
+                midiEvent = new MidiEvent(message, (long) currentTick);
+                myTrack.add(midiEvent);
 
 
                 currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 30 : 15);
@@ -294,10 +447,10 @@ public class Player {
                 /*
                  * Adds the noteOff to the track
                  */
-                mm = new ShortMessage();
-                mm.setMessage(0x80, ((Note) ms).getMidiValue(), 0x60);
-                me = new MidiEvent(mm, (long) currentTick);
-                myTrack.add(me);
+                message = new ShortMessage();
+                message.setMessage(0x80, ((Note) ms).getMidiValue(), 0x60);
+                midiEvent = new MidiEvent(message, (long) currentTick);
+                myTrack.add(midiEvent);
             } else if (ms instanceof Chord) {
                 /*
                  * Adds the noteOn Event to the track
@@ -305,10 +458,10 @@ public class Player {
                 ArrayList<Integer> chordNotes  = ms.getNotes();
                 for (Integer note:
                      chordNotes) {
-                    mm = new ShortMessage();
-                    mm.setMessage(0x90, note, 0x60);
-                    me = new MidiEvent(mm, (long) currentTick);
-                    myTrack.add(me);
+                    message = new ShortMessage();
+                    message.setMessage(0x90, note, 0x60);
+                    midiEvent = new MidiEvent(message, (long) currentTick);
+                    myTrack.add(midiEvent);
                 }
 
 
@@ -321,10 +474,10 @@ public class Player {
                  */
                 for (Integer note:
                         chordNotes) {
-                    mm = new ShortMessage();
-                    mm.setMessage(0x80, note, 0x60);
-                    me = new MidiEvent(mm, (long) currentTick);
-                    myTrack.add(me);
+                    message = new ShortMessage();
+                    message.setMessage(0x80, note, 0x60);
+                    midiEvent = new MidiEvent(message, (long) currentTick);
+                    myTrack.add(midiEvent);
                 }
             }
 
@@ -334,11 +487,11 @@ public class Player {
 
 
         //****  set end of track (meta event) 19 ticks later  ****
-        mt = new MetaMessage();
+        metaMessage = new MetaMessage();
         byte[] bet = {}; // empty array
-        mt.setMessage(0x2F,bet,0);
-        me = new MidiEvent(mt, (long)140);
-        myTrack.add(me);
+        metaMessage.setMessage(0x2F,bet,0);
+        midiEvent = new MidiEvent(metaMessage, (long)140);
+        myTrack.add(midiEvent);
 
         //****  write the MIDI sequence to a MIDI file  ****
         File f = new File(TrackName+".mid");
@@ -348,11 +501,11 @@ public class Player {
     }
 
     public static void main(String[] args) throws Exception {
-        Player player = new Player(24);
+        Player player = new Player(26);
         Composition newComposition = new Composition();
-        newComposition.readFromFile("./resource/input/ode_to_joy.txt");
+        newComposition.readFromFile("./resource/input/fly_me_to_the_moon.txt");
         player.setMyComposition(newComposition);
-        //player.playComposition();
+        player.playComposition();
         player.exportToMidi();
     }
 }

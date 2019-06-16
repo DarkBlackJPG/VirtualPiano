@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/ProjekatIzPOOP.iml" filepath="$PROJECT_DIR$/ProjekatIzPOOP.iml" />
+      <module fileurl="file://$PROJECT_DIR$/VirtualPiano.iml" filepath="$PROJECT_DIR$/VirtualPiano.iml" />
     </modules>
   </component>
 </project>
