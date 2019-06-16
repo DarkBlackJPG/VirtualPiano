@@ -71,10 +71,57 @@ public class Composition {
      */
     private ArrayList<MusicSymbol> myNotes = new ArrayList<>();
 
+    private String myCompositionTxtFile = null;
 
     /// ====================
     /// ====== Methods =====
     /// ====================
+
+    public static String extractFilename(String pathToFile){
+        final String patternString = "\\w+(?:\\.\\w+)";
+
+        Pattern pattern = Pattern.compile(patternString);
+        Matcher myMatcher = pattern.matcher(pathToFile);
+
+        if (myMatcher.find()){
+            String intermediate = myMatcher.group(0);
+            intermediate = intermediate.replace(".txt", "");
+            return intermediate;
+        }
+
+        return null;
+
+    }
+
+    /**
+     *
+     * @return returns the fullPath of composition
+     */
+    public String getMyCompositionTxtFile() {
+        return myCompositionTxtFile;
+    }
+
+    /**
+     * Set the new file for the composition. This will call the readFromFile(..) method implicitly
+     * @param myCompositionTxtFile The parameter has two types of parsing the location:
+     *                             1) You can add the full, absolute path OR the relative path, but you
+     *                                then have to know the relative path precisely, you have to indicate
+     *                                that you are giving te full path with the @ at the beginning, otherwise, it
+     *                                result in an unhandled exception (i.e. @../relative/resource/temp.txt).
+     *
+     *                             2) You can add only the file name, the extension must exist. Relative path
+     *                                assumed. The location where the file should be is ./resource/input/
+     */
+    public void setMyCompositionTxtFile(String myCompositionTxtFile) {
+        if(myCompositionTxtFile.charAt(0) == '@'){
+            myCompositionTxtFile.replace("@", "");
+            this.myCompositionTxtFile = myCompositionTxtFile;
+        } else {
+            this.myCompositionTxtFile = "./resource/input/"+(myCompositionTxtFile.contains(".txt") ? myCompositionTxtFile : myCompositionTxtFile + ".txt");
+        }
+
+        readFromFile(this.myCompositionTxtFile);
+    }
 
     /**
      * getMyNotes() returns the reference to the Composition i.e.
@@ -140,6 +187,8 @@ public class Composition {
      * @return Returns true if operation ended successfully
      */
     public boolean readFromFile(String filePath) {
+
+        myCompositionTxtFile = filePath;
 
         final String patternString =
                 "([\\w]+)?" +        // This part reads QUARTERS (Quarters should be written outside [...])                         | 1
@@ -263,6 +312,10 @@ public class Composition {
         return new Note(duration, midiVal, charachter, name);
     }
 
+    /**
+     * This function is used to convert the Composition object to a String type
+     * @return Returns the String object containing ONLY the file name, <b>not</b> the entire file path!
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
