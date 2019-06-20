@@ -244,6 +244,7 @@ public class Player {
         channel = getChannel(1);
         myInstrument = instrument;
         myComposition = null;
+        channel.setOmni(true);
         channel.programChange(instrument);
     }
 
@@ -252,7 +253,7 @@ public class Player {
      * @param note Note to be played
      */
     public void play(final int note){
-        channel.noteOn(note, 50);
+        channel.noteOn(note, 60);
     }
 
     /**
@@ -260,7 +261,7 @@ public class Player {
      * @param note Integer value which represents the Midi code for note
      */
     public void release (final int note) {
-        channel.noteOff(note, 50);
+        channel.noteOff(note, 60);
     }
 
     /**
@@ -318,6 +319,7 @@ public class Player {
 
             final int quarterTick = 300;
             final int eightTick = 150;
+
 
             for (MusicSymbol ms :
                     compositionNotes) {
@@ -501,12 +503,13 @@ public class Player {
     }
 
     public static void main(String[] args) throws Exception {
-        Player player = new Player(26);
+        Player player = new Player(10);
         Composition newComposition = new Composition();
-        newComposition.readFromFile("./resource/input/fly_me_to_the_moon.txt");
+        newComposition.readFromFile("./resource/input/ariana_grande.txt");
         player.setMyComposition(newComposition);
-        player.playComposition();
+
         player.exportToMidi();
+        player.playComposition();
     }
 }
 
