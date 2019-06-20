@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/VirtualPiano.iml" filepath="$PROJECT_DIR$/VirtualPiano.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FXTest.iml" filepath="$PROJECT_DIR$/FXTest.iml" />
     </modules>
   </component>
 </project>

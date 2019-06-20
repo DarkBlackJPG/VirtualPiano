@@ -1,12 +1,11 @@
 package piano;
 
+import javafx.scene.control.Button;
+
 import javax.sound.midi.*;
 import java.io.File;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Scanner;
 
 /**
  * TODO
@@ -168,7 +167,7 @@ All midi instruments
 128. 	Gunshot
  */
 
-public class Player {
+public class Player extends Thread{
     /**
      * Static field which is used as the first instrument
      * from 127 instruments that can be used in java
@@ -362,7 +361,7 @@ public class Player {
      */
     public void exportToMidi()
 
-            throws  CompositionNotLoadedException,
+            throws CompositionNotLoadedException,
                     InvalidMidiDataException,
                     IOException {
         if(myComposition == null || myComposition.getMyNotes().size() <= 0){
@@ -503,13 +502,98 @@ public class Player {
     }
 
     public static void main(String[] args) throws Exception {
-        Player player = new Player(10);
+        Player player = new Player(1);
         Composition newComposition = new Composition();
         newComposition.readFromFile("./resource/input/ariana_grande.txt");
         player.setMyComposition(newComposition);
 
-        player.exportToMidi();
+       //player.exportToMidi();
         player.playComposition();
+    }
+
+    private Controller ctrl;
+    public void activateKeysWhenFinished(Controller ctrl){
+            this.ctrl = ctrl;
+    }
+
+    private boolean isPaused = false;
+    private Thread myThread = null;
+    public void setThreadReference(Thread myThread){
+        this.myThread = myThread;
+    }
+
+    private boolean stop = false;
+    public synchronized void pausePlay(){
+        if (!isPaused)
+                isPaused = true;
+    }
+    public synchronized void resumePlay(){
+        if(isPaused)
+            isPaused = false;
+        notify();
+    }
+    public void stopPlay(){
+        stop = true;
+    }
+
+    public boolean threadReferenceSet(){
+        return myThread != null;
+
+    }
+
+    @Override
+    public void run() {
+        if (myComposition != null)
+        {
+            ArrayList<MusicSymbol> compositionNotes = myComposition.getMyNotes();
+
+            final int quarterTick = 300;
+            final int eightTick = 150;
+
+            try {
+                while (!interrupted()){
+
+                    for (MusicSymbol ms :
+                            compositionNotes) {
+                        synchronized (this){
+                            while (isPaused){
+                                wait();
+                            }
+                        }
+                        ArrayList<Integer> allNotes = ms.getNotes();
+                        Duration noteDuration = ms.getSymbDuration();
+                        try {
+                            if (ms instanceof Note) {
+                                play(allNotes.get(0), (noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
+                            } else if (ms instanceof Pause) {
+                                sleep((noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
+                            } else if (ms instanceof Chord) {
+                                playChord(allNotes, (noteDuration.getDurationValue() == 4 ? quarterTick : eightTick));
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        if (stop)
+                            break;
+                    }
+                    break;
+                }
+            } catch (InterruptedException ex){
+
+            }
+            stop = false;
+            ArrayList<Button> buttons = ctrl.keyboardReferences;
+            for (javafx.scene.control.Button b :
+                    buttons) {
+                b.setDisable(false);
+            }
+            Controller.autoplayOn = false;
+            ctrl.Pause.setDisable(true);
+            ctrl.Stop.setDisable(true);
+            ctrl.Play.setDisable(true);
+            ctrl.AutoPlay.setDisable(false);
+            ctrl.Record.setDisable(false);
+        }
     }
 }
 
