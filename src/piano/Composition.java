@@ -32,6 +32,7 @@ public class Composition {
      */
     public static HashMap<String, Character> nameToCharachterHashMapping;
 
+    public static HashMap<Integer, Character> integerToCharacterMapping;
     /// Static field initialization!
 
     /*
@@ -42,7 +43,7 @@ public class Composition {
         characterNameMapping = new HashMap<>();
         charToIntMapping = new HashMap<>();
         nameToCharachterHashMapping = new HashMap<>();
-
+        integerToCharacterMapping = new HashMap<>();
 
         try (BufferedReader br = Files.newBufferedReader(Paths.get("./resource/map.csv"),
              StandardCharsets.US_ASCII)) {
@@ -52,6 +53,7 @@ public class Composition {
                 charToIntMapping.put(attributes[0].charAt(0), Integer.parseInt(attributes[2]));
                 characterNameMapping.put(attributes[0].charAt(0), attributes[1]);
                 nameToCharachterHashMapping.put(attributes[1], attributes[0].charAt(0));
+                integerToCharacterMapping.put(Integer.parseInt(attributes[2]), attributes[0].charAt(0));
                 currentLine = br.readLine();
             }
 
@@ -74,6 +76,10 @@ public class Composition {
     /// ====================
     /// ====== Methods =====
     /// ====================
+
+    public void importNotes(ArrayList<MusicSymbol> music){
+        myNotes = music;
+    }
 
     public static String extractFilename(String pathToFile){
         final String patternString = "\\w+(?:\\.\\w+)";
@@ -117,10 +123,15 @@ public class Composition {
         } else {
             this.myCompositionTxtFile = "./resource/input/"+(myCompositionTxtFile.contains(".txt") ? myCompositionTxtFile : myCompositionTxtFile + ".txt");
         }
-
         readFromFile(this.myCompositionTxtFile);
     }
+    public void setMyCompositionName(String myCompositionTxtFile){
+        if (myCompositionTxtFile == "") {
+            myCompositionTxtFile = "DefaultName";
+        }
+            this.myCompositionTxtFile = "./resource/input/" + (myCompositionTxtFile.contains(".txt") ? myCompositionTxtFile : myCompositionTxtFile + ".txt");
 
+    }
     /**
      * getMyNotes() returns the reference to the Composition i.e.
      * all notes that are considered a compositon

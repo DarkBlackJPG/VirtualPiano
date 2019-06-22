@@ -47,6 +47,11 @@ public class Chord extends MusicSymbol {
             chordNotes.add(new Note(notes.charAt(i), symbDuration));
         }
     }
+    public Chord(ArrayList<Note> notes, Duration symbDuration){
+        super(symbDuration);
+        chordNotes = notes;
+
+    }
 
     /**
      * Overriden method from MysicSymbol.class

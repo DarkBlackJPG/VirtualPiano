@@ -1,11 +1,18 @@
 package piano;
 
+import com.sun.javafx.css.CalculatedValue;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.paint.Color;
 
 import javax.sound.midi.*;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.stream.StreamSupport;
 
 /**
  * TODO
@@ -47,124 +54,124 @@ All midi instruments
 8. 	Clavi
 9. 	Celesta
 10. Glockenspiel
-11. 	Music Box
-12. 	Vibraphone
-13. 	Marimba
-14. 	Xylophone
-15. 	Tubular Bells
-16. 	Dulcimer
-17. 	Drawbar Organ
-18. 	Percussive Organ
-19. 	Rock Organ
-20. 	Church Organ
-21. 	Reed Organ
-22. 	Accordion
-23. 	Harmonica
-24. 	Tango Accordion
-25. 	Acoustic Guitar (nylon)
-26. 	Acoustic Guitar (steel)
-27. 	Electric Guitar (jazz)
-28. 	Electric Guitar (clean)
-29. 	Electric Guitar (muted)
-30. 	Overdriven Guitar
-31. 	Distortion Guitar
-32. 	Guitar harmonics
-33. 	Acoustic Bass
-34. 	Electric Bass (finger)
-35. 	Electric Bass (pick)
-36. 	Fretless Bass
-37. 	Slap Bass 1
-38. 	Slap Bass 2
-39. 	Synth Bass 1
-40. 	Synth Bass 2
-41. 	Violin
-42. 	Viola
-43. 	Cello
-44. 	Contrabass
-45. 	Tremolo Strings
-46. 	Pizzicato Strings
-47. 	Orchestral Harp
-48. 	Timpani
-49. 	String Ensemble 1
-50. 	String Ensemble 2
-51. 	SynthStrings 1
-52. 	SynthStrings 2
-53. 	Choir Aahs
-54. 	Voice Oohs
-55. 	Synth Voice
-56. 	Orchestra Hit
-57. 	Trumpet
-58. 	Trombone
-59. 	Tuba
-60. 	Muted Trumpet
-61. 	French Horn
-62. 	Brass Section
-63. 	SynthBrass 1
-64. 	SynthBrass 2
-65. 	Soprano Sax
-66. 	Alto Sax
-67. 	Tenor Sax
-68. 	Baritone Sax
-69. 	Oboe
-70. 	English Horn
-71. 	Bassoon
-72. 	Clarinet
-73. 	Piccolo
-74. 	Flute
-75. 	Recorder
-76. 	Pan Flute
-77. 	Blown Bottle
-78. 	Shakuhachi
-79. 	Whistle
-80. 	Ocarina
-81. 	Lead 1 (square)
-82. 	Lead 2 (sawtooth)
-83. 	Lead 3 (calliope)
-84. 	Lead 4 (chiff)
-85. 	Lead 5 (charang)
-86. 	Lead 6 (voice)
-87. 	Lead 7 (fifths)
-88. 	Lead 8 (bass + lead)
-89. 	Pad 1 (new age)
-90. 	Pad 2 (warm)
-91. 	Pad 3 (polysynth)
-92. 	Pad 4 (choir)
-93. 	Pad 5 (bowed)
-94. 	Pad 6 (metallic)
-95. 	Pad 7 (halo)
-96. 	Pad 8 (sweep)
-97. 	FX 1 (rain)
-98. 	FX 2 (soundtrack)
-99. 	FX 3 (crystal)
-100. 	FX 4 (atmosphere)
-101. 	FX 5 (brightness)
-102. 	FX 6 (goblins)
-103. 	FX 7 (echoes)
-104. 	FX 8 (sci-fi)
-105. 	Sitar
-106. 	Banjo
-107. 	Shamisen
-108. 	Koto
-109. 	Kalimba
-110. 	Bag pipe
-111. 	Fiddle
-112. 	Shanai
-113. 	Tinkle Bell
-114. 	Agogo
-115. 	Steel Drums
-116. 	Woodblock
-117. 	Taiko Drum
-118. 	Melodic Tom
-119. 	Synth Drum
-120. 	Reverse Cymbal
-121. 	Guitar Fret Noise
-122. 	Breath Noise
-123. 	Seashore
-124. 	Bird Tweet
-125. 	Telephone Ring
-126. 	Helicopter
-127. 	Applause
-128. 	Gunshot
+11. Music Box
+12. Vibraphone
+13. Marimba
+14. Xylophone
+15. Tubular Bells
+16. Dulcimer
+17. Drawbar Organ
+18. Percussive Organ
+19. Rock Organ
+20. Church Organ
+21. Reed Organ
+22. Accordion
+23. Harmonica
+24. Tango Accordion
+25. Acoustic Guitar (nylon)
+26. Acoustic Guitar (steel)
+27. Electric Guitar (jazz)
+28. Electric Guitar (clean)
+29. Electric Guitar (muted)
+30. Overdriven Guitar
+31. Distortion Guitar
+32. Guitar harmonics
+33. Acoustic Bass
+34. Electric Bass (finger)
+35. Electric Bass (pick)
+36. Fretless Bass
+37. Slap Bass 1
+38. Slap Bass 2
+39. Synth Bass 1
+40. Synth Bass 2
+41. Violin
+42. Viola
+43. Cello
+44. Contrabass
+45. Tremolo Strings
+46. Pizzicato Strings
+47. Orchestral Harp
+48. Timpani
+49. String Ensemble 1
+50. String Ensemble 2
+51. SynthStrings 1
+52. SynthStrings 2
+53. Choir Aahs
+54. Voice Oohs
+55. Synth Voice
+56. Orchestra Hit
+57. Trumpet
+58. Trombone
+59. Tuba
+60. Muted Trumpet
+61. French Horn
+62. Brass Section
+63. SynthBrass 1
+64. SynthBrass 2
+65. Soprano Sax
+66. Alto Sax
+67. Tenor Sax
+68. Baritone Sax
+69. Oboe
+70. English Horn
+71. Bassoon
+72. Clarinet
+73. Piccolo
+74. Flute
+75. Recorder
+76. Pan Flute
+77. Blown Bottle
+78. Shakuhachi
+79. Whistle
+80. Ocarina
+81. Lead 1 (square)
+82. Lead 2 (sawtooth)
+83. Lead 3 (calliope)
+84. Lead 4 (chiff)
+85. Lead 5 (charang)
+86. Lead 6 (voice)
+87. Lead 7 (fifths)
+88. Lead 8 (bass + lead)
+89. Pad 1 (new age)
+90. Pad 2 (warm)
+91. Pad 3 (polysynth)
+92. Pad 4 (choir)
+93. Pad 5 (bowed)
+94. Pad 6 (metallic)
+95. Pad 7 (halo)
+96. Pad 8 (sweep)
+97. FX 1 (rain)
+98. FX 2 (soundtrack)
+99. FX 3 (crystal)
+100.FX 4 (atmosphere)
+101.FX 5 (brightness)
+102.FX 6 (goblins)
+103.FX 7 (echoes)
+104.FX 8 (sci-fi)
+105.Sitar
+106.Banjo
+107.Shamisen
+108.Koto
+109.Kalimba
+110.Bag pipe
+111.Fiddle
+112.Shanai
+113.Tinkle Bell
+114.Agogo
+115.Steel Drums
+116.Woodblock
+117.Taiko Drum
+118.Melodic Tom
+119.Synth Drum
+120.Reverse Cymbal
+121.Guitar Fret Noise
+122.Breath Noise
+123.Seashore
+124.Bird Tweet
+125.Telephone Ring
+126.Helicopter
+127.Applause
+128.Gunshot
  */
 
 public class Player extends Thread{
@@ -178,6 +185,7 @@ public class Player extends Thread{
 
     private int myInstrument;
     private MidiChannel channel;
+    private int currentSymbol;
 
     /**
      * This method is used to get the reference to the composition
@@ -195,6 +203,8 @@ public class Player extends Thread{
      */
     public void setMyComposition(Composition composition){
         myComposition = composition;
+        currentSymbol = 0;
+        print();
     }
 
 
@@ -359,7 +369,7 @@ public class Player extends Thread{
      * @throws InvalidMidiDataException {@link InvalidMidiDataException}
      * @throws IOException {@link IOException}
      */
-    public void exportToMidi()
+    public void exportToMidi(String filePath)
 
             throws CompositionNotLoadedException,
                     InvalidMidiDataException,
@@ -427,7 +437,7 @@ public class Player extends Thread{
                 compositionSymbols) {
 
             if (ms instanceof Pause){
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 30 : 15);
+                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
                 continue;
             }
 
@@ -442,7 +452,7 @@ public class Player extends Thread{
                 myTrack.add(midiEvent);
 
 
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 30 : 15);
+                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
 
 
                 /*
@@ -467,7 +477,7 @@ public class Player extends Thread{
 
 
 
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 30 : 15);
+                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
 
 
                 /*
@@ -495,9 +505,63 @@ public class Player extends Thread{
         myTrack.add(midiEvent);
 
         //****  write the MIDI sequence to a MIDI file  ****
-        File f = new File(TrackName+".mid");
+        File f = new File(filePath+"\\"+TrackName+".mid");
         MidiSystem.write(myMIDISequence,1,f);
 
+
+    }
+
+    public void exportToTxt(String filePath) throws CompositionNotLoadedException {
+        if(myComposition == null || myComposition.getMyNotes().size() <= 0){
+            throw new CompositionNotLoadedException();
+        }
+        String TrackName = Composition.extractFilename(myComposition.getMyCompositionTxtFile());
+        StringBuilder compositionForExport = new StringBuilder();
+        ArrayList<MusicSymbol> musicSymbols = myComposition.getMyNotes();
+        for (int i = 0; i < musicSymbols.size(); i++){
+            MusicSymbol temp = musicSymbols.get(i) ;
+            if (temp instanceof Chord){
+                ArrayList<Integer> chordNotes = temp.getNotes();
+                compositionForExport.append("[");
+                for (Integer a :
+                        chordNotes) {
+                    compositionForExport.append(Composition.integerToCharacterMapping.get(a));
+                }
+                compositionForExport.append("]");
+
+            } else if (temp instanceof Note){
+                if (temp.getSymbDuration().getDurationValue() == 8){
+                    StringBuilder temporaryBuilder = new StringBuilder();
+                    temporaryBuilder.append("[");
+                    while (i < musicSymbols.size() && temp.getSymbDuration().getDurationValue() == 8) {
+                        temp = musicSymbols.get(i);
+                        char note = Composition.integerToCharacterMapping.get(temp.getNotes().get(0));
+                        temporaryBuilder.append(note+" ");
+                        i++;
+                    }
+                    i--;
+                    temporaryBuilder.append("]");
+                    temporaryBuilder.replace(temporaryBuilder.length() - 2, temporaryBuilder.length(), "]");
+                    compositionForExport.append(temporaryBuilder);
+
+                } else {
+                    char note = Composition.integerToCharacterMapping.get(temp.getNotes().get(0));
+                    compositionForExport.append(note);
+                }
+            } else if (temp instanceof Pause){
+                compositionForExport.append(temp.getSymbDuration().getDurationValue() == 4 ? " " : " | ");
+            }
+        }
+
+        try (PrintWriter out = new PrintWriter(filePath+"\\"+TrackName+".txt")) {
+            out.println(compositionForExport.toString());
+        } catch (IOException e){
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error occured");
+            alert.setHeaderText("Error exporting to text");
+            alert.setContentText(e.getMessage());
+            alert.showAndWait();
+        }
 
     }
 
@@ -541,8 +605,73 @@ public class Player extends Thread{
 
     }
 
+
+    private Canvas myCanvas;
+
+    public void setMyCanvas(Canvas myCanvas) {
+        this.myCanvas = myCanvas;
+    }
+
+    public Canvas getMyCanvas() {
+        return myCanvas;
+    }
+
+    public void updateCurrentNote(){
+        currentSymbol++;
+        print();
+        if (getCurrentSymbol() instanceof Pause){
+            updateCurrentNote();
+        }
+        if (currentSymbol == myComposition.getMyNotes().size()) {
+            currentSymbol = 0;
+            print();
+        }
+    }
+    public MusicSymbol getCurrentSymbol() {
+        if (myComposition.getMyNotes().size() > 0 && currentSymbol < myComposition.getMyNotes().size()){
+            return myComposition.getMyNotes().get(currentSymbol);
+        }
+        return null;
+    }
+
+    public void print() {
+        if(myCanvas != null) {
+            ArrayList<MusicSymbol> ms = myComposition.getMyNotes();
+            GraphicsContext gc = myCanvas.getGraphicsContext2D();
+            gc.clearRect(0, 0, myCanvas.getWidth(), myCanvas.getHeight());
+            int topOffset = (int) (myCanvas.getHeight() / 2), leftOffset = 0;
+            String output ;
+            for (int i = currentSymbol; i < (currentSymbol + 10 > ms.size() ? currentSymbol + (ms.size() - currentSymbol) : currentSymbol + 10); i++) {
+
+                if (ms.get(i) instanceof Pause) {
+                    leftOffset += 50;
+                } else if (ms.get(i) instanceof Note) {
+                    gc.setStroke((ms.get(i).symbDuration.getDurationValue() == 4) ? Color.INDIANRED : Color.DARKSEAGREEN);
+                    output = (Controller.isNote ? ms.get(i).toString() : Composition.nameToCharachterHashMapping.get(ms.get(i).toString()).toString());
+                    gc.strokeText(output, leftOffset, topOffset);
+                    leftOffset += 50;
+                } else if (ms.get(i) instanceof Chord) {
+
+                    gc.setStroke((ms.get(i).symbDuration.getDurationValue() == 4) ? Color.INDIANRED : Color.DARKSEAGREEN);
+                    ArrayList<Integer> notes = ms.get(i).getNotes();
+                    int offsetFromCenter = notes.size() / 2 * 20;
+                    for (Integer note :
+                            notes) {
+                        String name = Composition.characterNameMapping.get(Composition.integerToCharacterMapping.get(note));
+                        output = (Controller.isNote ? name : Composition.nameToCharachterHashMapping.get(name).toString());
+                        gc.strokeText(output, leftOffset, topOffset - offsetFromCenter);
+                        offsetFromCenter -= 20;
+                    }
+                    leftOffset += 50;
+                }
+            }
+        }
+    }
+
     @Override
     public void run() {
+        currentSymbol = 0;
+        print();
         if (myComposition != null)
         {
             ArrayList<MusicSymbol> compositionNotes = myComposition.getMyNotes();
@@ -573,8 +702,12 @@ public class Player extends Thread{
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        if (stop)
+                        print();
+                        currentSymbol++;
+                        if (stop){
                             break;
+                        }
+
                     }
                     break;
                 }
@@ -582,6 +715,8 @@ public class Player extends Thread{
 
             }
             stop = false;
+            currentSymbol = 0;
+            print();
             ArrayList<Button> buttons = ctrl.keyboardReferences;
             for (javafx.scene.control.Button b :
                     buttons) {
@@ -592,6 +727,7 @@ public class Player extends Thread{
             ctrl.Stop.setDisable(true);
             ctrl.Play.setDisable(true);
             ctrl.AutoPlay.setDisable(false);
+            ctrl.compositionChooseButton.setDisable(false);
             ctrl.Record.setDisable(false);
         }
     }

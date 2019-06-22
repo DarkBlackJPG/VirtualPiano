@@ -2,6 +2,10 @@
 
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.Pane?>
 
 <Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="441.0" prefWidth="1188.0" style="-fx-background-color: #efefef;" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="piano.Controller">
@@ -66,11 +70,25 @@
         <Button fx:id="FS6" alignment="BOTTOM_CENTER" layoutX="1077.0" layoutY="317.0" mnemonicParsing="false" onAction="#playNoteFS6" prefHeight="74.0" prefWidth="19.0" style="-fx-background-color: #000000;" text="C" textAlignment="CENTER" textFill="WHITE" textOverrun="CENTER_WORD_ELLIPSIS" wrapText="true" />
         <Button fx:id="GS6" alignment="BOTTOM_CENTER" layoutX="1108.0" layoutY="317.0" mnemonicParsing="false" onAction="#playNoteGS6" prefHeight="74.0" prefWidth="19.0" style="-fx-background-color: #000000;" text="V" textAlignment="CENTER" textFill="WHITE" textOverrun="CENTER_WORD_ELLIPSIS" wrapText="true" />
         <Button fx:id="AS6" alignment="BOTTOM_CENTER" layoutX="1145.0" layoutY="317.0" mnemonicParsing="false" onAction="#playNoteAS6" prefHeight="74.0" prefWidth="19.0" style="-fx-background-color: #000000;" text="B" textAlignment="CENTER" textFill="WHITE" textOverrun="CENTER_WORD_ELLIPSIS" wrapText="true" />
-        <Canvas fx:id="MyCanvas" height="298.0" layoutX="20.0" layoutY="11.0" width="658.0" />
+        <Canvas fx:id="MyCanvas" height="298.0" layoutX="20.0" layoutY="11.0" width="732.0" />
         <Button fx:id="AutoPlay" layoutX="775.0" layoutY="43.0" mnemonicParsing="false" onAction="#play" prefHeight="60.0" prefWidth="180.0" text="Auto Play" />
         <Button fx:id="Pause" disable="true" layoutX="775.0" layoutY="112.0" mnemonicParsing="false" onAction="#pause" prefHeight="33.0" prefWidth="48.0" text="⏸" />
         <Button fx:id="Stop" disable="true" layoutX="904.0" layoutY="112.0" mnemonicParsing="false" onAction="#stop" prefHeight="33.0" prefWidth="48.0" text="■" />
         <Button fx:id="Play" disable="true" layoutX="839.0" layoutY="112.0" mnemonicParsing="false" onAction="#resume" prefHeight="33.0" prefWidth="48.0" text="▶" />
-        <Button fx:id="Record" layoutX="769.0" layoutY="200.0" mnemonicParsing="false" prefHeight="60.0" prefWidth="180.0" text="Record" />
+        <Button fx:id="Record" layoutX="773.0" layoutY="230.0" mnemonicParsing="false" onAction="#record" prefHeight="60.0" prefWidth="94.0" text="Record" />
+      <Button fx:id="compositionChooseButton" layoutX="994.0" layoutY="43.0" mnemonicParsing="false" onAction="#loadComposition" prefHeight="25.0" prefWidth="180.0" text="Choose composition" />
+      <Label fx:id="compositionPath" layoutX="994.0" layoutY="80.0" />
+      <ComboBox fx:id="instrumentCombobox" layoutX="995.0" layoutY="116.0" prefHeight="25.0" prefWidth="180.0" />
+      <Button fx:id="setInstrumentButton" layoutX="994.0" layoutY="148.0" mnemonicParsing="false" onAction="#changeInstrument" text="Set Instrument" />
+      <Button fx:id="txtButton" layoutX="994.0" layoutY="230.0" mnemonicParsing="false" onAction="#txtExport" prefHeight="25.0" prefWidth="180.0" text="Export to .txt" />
+      <Button fx:id="midiButton" layoutX="994.0" layoutY="265.0" mnemonicParsing="false" onAction="#midiExport" prefHeight="25.0" prefWidth="180.0" text="Export to .mid" />
+      <RadioButton fx:id="showNotesRadioButton" layoutX="773.0" layoutY="158.0" mnemonicParsing="false" selected="true" text="Show Notes">
+         <toggleGroup>
+            <ToggleGroup fx:id="noteChoice" />
+         </toggleGroup>
+      </RadioButton>
+      <RadioButton fx:id="showKeysRadioButton" layoutX="777.0" layoutY="197.0" mnemonicParsing="false" text="Show keys" toggleGroup="$noteChoice" />
+      <Button fx:id="rememberChoiceButton" layoutX="867.0" layoutY="155.0" mnemonicParsing="false" onAction="#changeView" prefHeight="60.0" prefWidth="85.0" text="Remember choice" textAlignment="CENTER" wrapText="true" />
+      <Button fx:id="stopRecordButton" disable="true" layoutX="875.0" layoutY="230.0" mnemonicParsing="false" onAction="#stopRecording" prefHeight="60.0" prefWidth="77.0" text="Stop Recording" textAlignment="CENTER" wrapText="true" />
     </children>
 </Pane>
