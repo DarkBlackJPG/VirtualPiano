@@ -6,8 +6,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.QuadCurve;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -17,10 +22,14 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Optional;
+
 import java.util.Queue;
 
+import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
 public class Controller {
@@ -121,6 +130,7 @@ public class Controller {
 
         keyboardReferences = new ArrayList<>();
     }
+    public final HashMap<Character, Button> charButtonBinding = new HashMap<>();
     @FXML
     public void initialize() {
         keyboardReferences.add(C2);
@@ -318,6 +328,127 @@ public class Controller {
         instrumentCombobox.setItems(options);
         instrumentCombobox.setValue("Choose an instrument");
         player.setMyCanvas(MyCanvas);
+
+        charButtonBinding.put('1',C2);
+        charButtonBinding.put('2',D2);
+        charButtonBinding.put('3',E2);
+        charButtonBinding.put('4',F2);
+        charButtonBinding.put('5',G2);
+        charButtonBinding.put('6',A2);
+        charButtonBinding.put('7',B2);
+        charButtonBinding.put('!',CS2);
+        charButtonBinding.put('@',DS2);
+        charButtonBinding.put('$',FS2);
+        charButtonBinding.put('%',GS2);
+        charButtonBinding.put('^',AS2);
+        charButtonBinding.put('8',C3);
+        charButtonBinding.put('9',D3);
+        charButtonBinding.put('0',E3);
+        charButtonBinding.put('q',F3);
+        charButtonBinding.put('w',G3);
+        charButtonBinding.put('e',A3);
+        charButtonBinding.put('r',B3);
+        charButtonBinding.put('*',CS3);
+        charButtonBinding.put('(',DS3);
+        charButtonBinding.put('Q',FS3);
+        charButtonBinding.put('W',GS3);
+        charButtonBinding.put('E',AS3);
+        charButtonBinding.put('t',C4);
+        charButtonBinding.put('y',D4);
+        charButtonBinding.put('u',E4);
+        charButtonBinding.put('i',F4);
+        charButtonBinding.put('o',G4);
+        charButtonBinding.put('p',A4);
+        charButtonBinding.put('a',B4);
+        charButtonBinding.put('T',CS4);
+        charButtonBinding.put('Y',DS4);
+        charButtonBinding.put('I',FS4);
+        charButtonBinding.put('O',GS4);
+        charButtonBinding.put('P',AS4);
+        charButtonBinding.put('s',C5);
+        charButtonBinding.put('d',D5);
+        charButtonBinding.put('f',E5);
+        charButtonBinding.put('g',F5);
+        charButtonBinding.put('h',G5);
+        charButtonBinding.put('j',A5);
+        charButtonBinding.put('k',B5);
+        charButtonBinding.put('S',CS5);
+        charButtonBinding.put('D',DS5);
+        charButtonBinding.put('G',FS5);
+        charButtonBinding.put('H',GS5);
+        charButtonBinding.put('J',AS5);
+        charButtonBinding.put('l',C6);
+        charButtonBinding.put('z',D6);
+        charButtonBinding.put('x',E6);
+        charButtonBinding.put('c',F6);
+        charButtonBinding.put('v',G6);
+        charButtonBinding.put('b',A6);
+        charButtonBinding.put('n',B6);
+        charButtonBinding.put('L',CS6);
+        charButtonBinding.put('Z',DS6);
+        charButtonBinding.put('C',FS6);
+        charButtonBinding.put('V',GS6);
+        charButtonBinding.put('B',AS6);
+        charButtonBinding.put('1',C2);
+        charButtonBinding.put('2',D2);
+        charButtonBinding.put('3',E2);
+        charButtonBinding.put('4',F2);
+        charButtonBinding.put('5',G2);
+        charButtonBinding.put('6',A2);
+        charButtonBinding.put('7',B2);
+        charButtonBinding.put('!',CS2);
+        charButtonBinding.put('@',DS2);
+        charButtonBinding.put('$',FS2);
+        charButtonBinding.put('%',GS2);
+        charButtonBinding.put('^',AS2);
+        charButtonBinding.put('8',C3);
+        charButtonBinding.put('9',D3);
+        charButtonBinding.put('0',E3);
+        charButtonBinding.put('q',F3);
+        charButtonBinding.put('w',G3);
+        charButtonBinding.put('e',A3);
+        charButtonBinding.put('r',B3);
+        charButtonBinding.put('*',CS3);
+        charButtonBinding.put('(',DS3);
+        charButtonBinding.put('Q',FS3);
+        charButtonBinding.put('W',GS3);
+        charButtonBinding.put('E',AS3);
+        charButtonBinding.put('t',C4);
+        charButtonBinding.put('y',D4);
+        charButtonBinding.put('u',E4);
+        charButtonBinding.put('i',F4);
+        charButtonBinding.put('o',G4);
+        charButtonBinding.put('p',A4);
+        charButtonBinding.put('a',B4);
+        charButtonBinding.put('T',CS4);
+        charButtonBinding.put('Y',DS4);
+        charButtonBinding.put('I',FS4);
+        charButtonBinding.put('O',GS4);
+        charButtonBinding.put('P',AS4);
+        charButtonBinding.put('s',C5);
+        charButtonBinding.put('d',D5);
+        charButtonBinding.put('f',E5);
+        charButtonBinding.put('g',F5);
+        charButtonBinding.put('h',G5);
+        charButtonBinding.put('j',A5);
+        charButtonBinding.put('k',B5);
+        charButtonBinding.put('S',CS5);
+        charButtonBinding.put('D',DS5);
+        charButtonBinding.put('G',FS5);
+        charButtonBinding.put('H',GS5);
+        charButtonBinding.put('J',AS5);
+        charButtonBinding.put('l',C6);
+        charButtonBinding.put('z',D6);
+        charButtonBinding.put('x',E6);
+        charButtonBinding.put('c',F6);
+        charButtonBinding.put('v',G6);
+        charButtonBinding.put('b',A6);
+        charButtonBinding.put('n',B6);
+        charButtonBinding.put('L',CS6);
+        charButtonBinding.put('Z',DS6);
+        charButtonBinding.put('C',FS6);
+        charButtonBinding.put('V',GS6);
+        charButtonBinding.put('B',AS6);
 
     }
     static boolean autoplayOn = false;
@@ -738,6 +869,8 @@ public class Controller {
         final long quarterTick = 600;
         final long eightTick = 300;
         ArrayList<Long> timeDifference = new ArrayList<>();
+        if (rawRecording.size() == 1)
+            timeDifference.add(1000L);
         for (int i = 0; i < rawRecording.size() - 1; i++){
             timeDifference.add(rawRecording.get(i+1).timestamp - rawRecording.get(i).timestamp);
         }
@@ -774,8 +907,11 @@ public class Controller {
                 }
             }
         }
-        tr.add(new TypeRecord(rawRecording.get(rawRecording.size()-1),rawRecording.get(rawRecording.size()-2).symbol));
-
+        if(rawRecording.size() > 1) {
+            tr.add(new TypeRecord(rawRecording.get(rawRecording.size() - 1), rawRecording.get(rawRecording.size() - 2).symbol));
+        } else {
+            tr.add(new TypeRecord(rawRecording.get(0), rawRecording.get(0).symbol));
+        }
         ArrayList<MusicSymbol> formattedMusic = new ArrayList<>();
         char noteSymbol;
         int midiValue;
@@ -840,13 +976,6 @@ public class Controller {
         showKeysRadioButton.setDisable(false);
         Record.setDisable(false);
         stopRecordButton.setDisable(true);
-
-
-        for (RecorderData d :
-                recorder.recorderData) {
-            System.out.println(d.symbol + "\t" + d.timestamp);
-        }
-
         TextInputDialog dialog = new TextInputDialog("Enter name");
         dialog.setHeaderText(null);
         dialog.setContentText("Enter composition name:");
@@ -857,6 +986,7 @@ public class Controller {
         newCompositon.importNotes(formatRecording(recorder.recorderData));
         player.setMyComposition(newCompositon);
 
+        compositionPath.setText( result.get() + ".txt");
 
     }
 
@@ -880,4 +1010,523 @@ public class Controller {
         myModel.setRecorder(recorder);
 
     }
+
+    public void thisKeyPressedC2(){
+        colorButton(C2);
+    }
+
+    public void thisKeyReleasedC2(){
+        unColorButton(C2);
+    }
+
+    public void thisKeyPressedD2(){
+        colorButton(D2);
+    }
+
+    public void thisKeyReleasedD2(){
+        unColorButton(D2);
+    }
+
+    public void thisKeyPressedE2(){
+        colorButton(E2);
+    }
+
+    public void thisKeyReleasedE2(){
+        unColorButton(E2);
+    }
+
+    public void thisKeyPressedF2(){
+        colorButton(F2);
+    }
+
+    public void thisKeyReleasedF2(){
+        unColorButton(F2);
+    }
+
+    public void thisKeyPressedG2(){
+        colorButton(G2);
+    }
+
+    public void thisKeyReleasedG2(){
+        unColorButton(G2);
+    }
+
+    public void thisKeyPressedA2(){
+        colorButton(A2);
+    }
+
+    public void thisKeyReleasedA2(){
+        unColorButton(A2);
+    }
+
+    public void thisKeyPressedB2(){
+        colorButton(B2);
+    }
+
+    public void thisKeyReleasedB2(){
+        unColorButton(B2);
+    }
+
+    public void thisKeyPressedCS2(){
+        colorButton(CS2);
+    }
+
+    public void thisKeyReleasedCS2(){
+        unColorButton(CS2);
+    }
+
+    public void thisKeyPressedDS2(){
+        colorButton(DS2);
+    }
+
+    public void thisKeyReleasedDS2(){
+        unColorButton(DS2);
+    }
+
+    public void thisKeyPressedFS2(){
+        colorButton(FS2);
+    }
+
+    public void thisKeyReleasedFS2(){
+        unColorButton(FS2);
+    }
+
+    public void thisKeyPressedGS2(){
+        colorButton(GS2);
+    }
+
+    public void thisKeyReleasedGS2(){
+        unColorButton(GS2);
+    }
+
+    public void thisKeyPressedAS2(){
+        colorButton(AS2);
+    }
+
+    public void thisKeyReleasedAS2(){
+        unColorButton(AS2);
+    }
+
+    public void thisKeyPressedC3(){
+        colorButton(C3);
+    }
+
+    public void thisKeyReleasedC3(){
+        unColorButton(C3);
+    }
+
+    public void thisKeyPressedD3(){
+        colorButton(D3);
+    }
+
+    public void thisKeyReleasedD3(){
+        unColorButton(D3);
+    }
+
+    public void thisKeyPressedE3(){
+        colorButton(E3);
+    }
+
+    public void thisKeyReleasedE3(){
+        unColorButton(E3);
+    }
+
+    public void thisKeyPressedF3(){
+        colorButton(F3);
+    }
+
+    public void thisKeyReleasedF3(){
+        unColorButton(F3);
+    }
+
+    public void thisKeyPressedG3(){
+        colorButton(G3);
+    }
+
+    public void thisKeyReleasedG3(){
+        unColorButton(G3);
+    }
+
+    public void thisKeyPressedA3(){
+        colorButton(A3);
+    }
+
+    public void thisKeyReleasedA3(){
+        unColorButton(A3);
+    }
+
+    public void thisKeyPressedB3(){
+        colorButton(B3);
+    }
+
+    public void thisKeyReleasedB3(){
+        unColorButton(B3);
+    }
+
+    public void thisKeyPressedCS3(){
+        colorButton(CS3);
+    }
+
+    public void thisKeyReleasedCS3(){
+        unColorButton(CS3);
+    }
+
+    public void thisKeyPressedDS3(){
+        colorButton(DS3);
+    }
+
+    public void thisKeyReleasedDS3(){
+        unColorButton(DS3);
+    }
+
+    public void thisKeyPressedFS3(){
+        colorButton(FS3);
+    }
+
+    public void thisKeyReleasedFS3(){
+        unColorButton(FS3);
+    }
+
+    public void thisKeyPressedGS3(){
+        colorButton(GS3);
+    }
+
+    public void thisKeyReleasedGS3(){
+        unColorButton(GS3);
+    }
+
+    public void thisKeyPressedAS3(){
+        colorButton(AS3);
+    }
+
+    public void thisKeyReleasedAS3(){
+        unColorButton(AS3);
+    }
+
+    public void thisKeyPressedC4(){
+        colorButton(C4);
+    }
+
+    public void thisKeyReleasedC4(){
+        unColorButton(C4);
+    }
+
+    public void thisKeyPressedD4(){
+        colorButton(D4);
+    }
+
+    public void thisKeyReleasedD4(){
+        unColorButton(D4);
+    }
+
+    public void thisKeyPressedE4(){
+        colorButton(E4);
+    }
+
+    public void thisKeyReleasedE4(){
+        unColorButton(E4);
+    }
+
+    public void thisKeyPressedF4(){
+        colorButton(F4);
+    }
+
+    public void thisKeyReleasedF4(){
+        unColorButton(F4);
+    }
+
+    public void thisKeyPressedG4(){
+        colorButton(G4);
+    }
+
+    public void thisKeyReleasedG4(){
+        unColorButton(G4);
+    }
+
+    public void thisKeyPressedA4(){
+        colorButton(A4);
+    }
+
+    public void thisKeyReleasedA4(){
+        unColorButton(A4);
+    }
+
+    public void thisKeyPressedB4(){
+        colorButton(B4);
+    }
+
+    public void thisKeyReleasedB4(){
+        unColorButton(B4);
+    }
+
+    public void thisKeyPressedCS4(){
+        colorButton(CS4);
+    }
+
+    public void thisKeyReleasedCS4(){
+        unColorButton(CS4);
+    }
+
+    public void thisKeyPressedDS4(){
+        colorButton(DS4);
+    }
+
+    public void thisKeyReleasedDS4(){
+        unColorButton(DS4);
+    }
+
+    public void thisKeyPressedFS4(){
+        colorButton(FS4);
+    }
+
+    public void thisKeyReleasedFS4(){
+        unColorButton(FS4);
+    }
+
+    public void thisKeyPressedGS4(){
+        colorButton(GS4);
+    }
+
+    public void thisKeyReleasedGS4(){
+        unColorButton(GS4);
+    }
+
+    public void thisKeyPressedAS4(){
+        colorButton(AS4);
+    }
+
+    public void thisKeyReleasedAS4(){
+        unColorButton(AS4);
+    }
+
+    public void thisKeyPressedC5(){
+        colorButton(C5);
+    }
+
+    public void thisKeyReleasedC5(){
+        unColorButton(C5);
+    }
+
+    public void thisKeyPressedD5(){
+        colorButton(D5);
+    }
+
+    public void thisKeyReleasedD5(){
+        unColorButton(D5);
+    }
+
+    public void thisKeyPressedE5(){
+        colorButton(E5);
+    }
+
+    public void thisKeyReleasedE5(){
+        unColorButton(E5);
+    }
+
+    public void thisKeyPressedF5(){
+        colorButton(F5);
+    }
+
+    public void thisKeyReleasedF5(){
+        unColorButton(F5);
+    }
+
+    public void thisKeyPressedG5(){
+        colorButton(G5);
+    }
+
+    public void thisKeyReleasedG5(){
+        unColorButton(G5);
+    }
+
+    public void thisKeyPressedA5(){
+        colorButton(A5);
+    }
+
+    public void thisKeyReleasedA5(){
+        unColorButton(A5);
+    }
+
+    public void thisKeyPressedB5(){
+        colorButton(B5);
+    }
+
+    public void thisKeyReleasedB5(){
+        unColorButton(B5);
+    }
+
+    public void thisKeyPressedCS5(){
+        colorButton(CS5);
+    }
+
+    public void thisKeyReleasedCS5(){
+        unColorButton(CS5);
+    }
+
+    public void thisKeyPressedDS5(){
+        colorButton(DS5);
+    }
+
+    public void thisKeyReleasedDS5(){
+        unColorButton(DS5);
+    }
+
+    public void thisKeyPressedFS5(){
+        colorButton(FS5);
+    }
+
+    public void thisKeyReleasedFS5(){
+        unColorButton(FS5);
+    }
+
+    public void thisKeyPressedGS5(){
+        colorButton(GS5);
+    }
+
+    public void thisKeyReleasedGS5(){
+        unColorButton(GS5);
+    }
+
+    public void thisKeyPressedAS5(){
+        colorButton(AS5);
+    }
+
+    public void thisKeyReleasedAS5(){
+        unColorButton(AS5);
+    }
+
+    public void thisKeyPressedC6(){
+        colorButton(C6);
+    }
+
+    public void thisKeyReleasedC6(){
+        unColorButton(C6);
+    }
+
+    public void thisKeyPressedD6(){
+        colorButton(D6);
+    }
+
+    public void thisKeyReleasedD6(){
+        unColorButton(D6);
+    }
+
+    public void thisKeyPressedE6(){
+        colorButton(E6);
+    }
+
+    public void thisKeyReleasedE6(){
+        unColorButton(E6);
+    }
+
+    public void thisKeyPressedF6(){
+        colorButton(F6);
+    }
+
+    public void thisKeyReleasedF6(){
+        unColorButton(F6);
+    }
+
+    public void thisKeyPressedG6(){
+        colorButton(G6);
+    }
+
+    public void thisKeyReleasedG6(){
+        unColorButton(G6);
+    }
+
+    public void thisKeyPressedA6(){
+        colorButton(A6);
+    }
+
+    public void thisKeyReleasedA6(){
+        unColorButton(A6);
+    }
+
+    public void thisKeyPressedB6(){
+        colorButton(B6);
+    }
+
+    public void thisKeyReleasedB6(){
+        unColorButton(B6);
+    }
+
+    public void thisKeyPressedCS6(){
+        colorButton(CS6);
+    }
+
+    public void thisKeyReleasedCS6(){
+        unColorButton(CS6);
+    }
+
+    public void thisKeyPressedDS6(){
+        colorButton(DS6);
+    }
+
+    public void thisKeyReleasedDS6(){
+        unColorButton(DS6);
+    }
+
+    public void thisKeyPressedFS6(){
+        colorButton(FS6);
+    }
+
+    public void thisKeyReleasedFS6(){
+        unColorButton(FS6);
+    }
+
+    public void thisKeyPressedGS6(){
+        colorButton(GS6);
+    }
+
+    public void thisKeyReleasedGS6(){
+        unColorButton(GS6);
+    }
+
+    public void thisKeyPressedAS6(){
+        colorButton(AS6);
+    }
+
+    public void thisKeyReleasedAS6(){
+        unColorButton(AS6);
+    }
+
+
+    class ContainerClass {
+        Button button;
+        String previous;
+
+        public ContainerClass(Button button, String previous) {
+            this.button = button;
+            this.previous = previous;
+        }
+    }
+    private ArrayList<ContainerClass> buttonColors = new ArrayList<>();
+
+
+    public void colorButton(Button id){
+        for (ContainerClass c :
+                buttonColors) {
+            if (c.button == id) {
+                return;
+            }
+
+        }
+        buttonColors.add(new ContainerClass(id, id.getStyle()));
+        id.setStyle("-fx-background-color:#7f7f7f");
+    }
+    public void unColorButton(Button id){
+        ContainerClass cc = null;
+        for (int i = 0; i < buttonColors.size(); i++)
+            if (buttonColors.get(i).button.equals(id))
+            {
+                cc = buttonColors.get(i);
+                buttonColors.remove(i);
+                id.setStyle(cc.previous);
+                break;
+            }
+    }
+
+
+
 }

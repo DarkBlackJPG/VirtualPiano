@@ -10,14 +10,10 @@ import javafx.scene.control.Control;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.stage.Stage;
-
-import javax.management.timer.Timer;
 import javax.sound.midi.MidiUnavailableException;
-import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
 public class Main extends Application {
 
@@ -116,6 +112,8 @@ public class Main extends Application {
         add('B');
     }};
 
+    private ArrayList<KeyCode> pressedkeys = new ArrayList<>();
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("sample.fxml"));
@@ -144,35 +142,104 @@ public class Main extends Application {
                     '(' //9
             };
 
-            if (!Controller.autoplayOn) {
-                if (new KeyCodeCombination(KeyCode.getKeyCode(keyEvent.getCode().getName()), KeyCombination.SHIFT_DOWN).match(keyEvent)) {
+            if (!Controller.autoplayOn && keyEvent.getCode().getName().length() == 1 && !pressedkeys.contains(keyEvent.getCode()) && (allowedKeys.contains(keyEvent.getCode().getName().toLowerCase().charAt(0)) ||  allowedKeys.contains(keyEvent.getCode().getName().charAt(0)))) {
+                if (keyEvent.getCode() != KeyCode.SHIFT && new KeyCodeCombination(KeyCode.getKeyCode(keyEvent.getCode().getName()), KeyCombination.SHIFT_DOWN).match(keyEvent)) {
                     if(tryParse(keyEvent.getCode().getName())){
                         char c = keyEvent.getCode().getName().toLowerCase().charAt(0);
                         if (allowedKeys.contains(c)){
                             Integer a = Composition.charToIntMapping.get(map[Integer.parseInt(keyEvent.getCode().getName())]);
-                            if(a != null)
+                            if(a != null) {
+                                pressedkeys.add(keyEvent.getCode());
                                 controller.playNote(a);
+                                controller.colorButton(controller.charButtonBinding.get(map[Integer.parseInt(keyEvent.getCode().getName())]));
+                            }
                         }
 
 
                     } else {
-                        if (keyEvent.getCode() != KeyCode.SHIFT) {
                             Character c = keyEvent.getCode().getName().toUpperCase().charAt(0);
                             if (allowedKeys.contains(c)) {
-
+                                pressedkeys.add(keyEvent.getCode());
+                                controller.colorButton(controller.charButtonBinding.get(c));
                                 controller.playNote(Composition.charToIntMapping.get(c));
 
                             }
 
-                        }
                     }
                 } else if (keyEvent.getCode() != KeyCode.SHIFT) {
                     char c = keyEvent.getCode().getName().toLowerCase().charAt(0);
-                    if (allowedKeys.contains(c))
+                    if (allowedKeys.contains(c)){
+                        pressedkeys.add(keyEvent.getCode());
+                        controller.colorButton(controller.charButtonBinding.get(c));
                         controller.playNote(Composition.charToIntMapping.get(c));
-                }
+                    }
 
+                }
             }
+        });
+
+        root.setOnKeyReleased(keyEvent -> {
+            char[] map = new char[]{
+                    ')', //0
+                    '!', //1
+                    '@', //2
+                    '#', //3
+                    '$', //4
+                    '%', //5
+                    '^', //6
+                    '&', //7
+                    '*', //8
+                    '(' //9
+            };
+            if (!Controller.autoplayOn && keyEvent.getCode().getName().length() == 1 && pressedkeys.contains(keyEvent.getCode()) && (allowedKeys.contains(keyEvent.getCode().getName().toLowerCase().charAt(0)) ||  allowedKeys.contains(keyEvent.getCode().getName().charAt(0)))) {
+                if (keyEvent.getCode() != KeyCode.SHIFT && new KeyCodeCombination(KeyCode.getKeyCode(keyEvent.getCode().getName()), KeyCombination.SHIFT_DOWN).match(keyEvent)) {
+                    if(tryParse(keyEvent.getCode().getName())){
+                        char c = keyEvent.getCode().getName().toLowerCase().charAt(0);
+                        if (allowedKeys.contains(c)){
+                            Integer a = Composition.charToIntMapping.get(map[Integer.parseInt(keyEvent.getCode().getName())]);
+                            if(a != null) {
+                                controller.unColorButton(controller.charButtonBinding.get(map[Integer.parseInt(keyEvent.getCode().getName())]));
+                                for (int i = 0; i < pressedkeys.size(); i++){
+                                    if (pressedkeys.get(i) == keyEvent.getCode())
+                                    {
+                                        pressedkeys.remove(i);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+
+                    } else {
+                            Character c = keyEvent.getCode().getName().toUpperCase().charAt(0);
+                            if (allowedKeys.contains(c)) {
+                                controller.unColorButton(controller.charButtonBinding.get(c));
+                                for (int i = 0; i < pressedkeys.size(); i++){
+                                    if (pressedkeys.get(i) == keyEvent.getCode())
+                                    {
+                                        pressedkeys.remove(i);
+                                        break;
+                                    }
+                                }
+
+                            }
+                    }
+                } else if (keyEvent.getCode() != KeyCode.SHIFT) {
+                    char c = keyEvent.getCode().getName().toLowerCase().charAt(0);
+                    if (allowedKeys.contains(c)){
+                        controller.unColorButton(controller.charButtonBinding.get(c));
+                        for (int i = 0; i < pressedkeys.size(); i++){
+                            if (pressedkeys.get(i) == keyEvent.getCode())
+                            {
+                                pressedkeys.remove(i);
+                                break;
+                            }
+                        }
+                    }
+
+                }
+            }
+
         });
     }
 
