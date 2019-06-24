@@ -5,22 +5,30 @@ package piano;
  * duration measuring
  *
  * @fields _Duration myDuration
- *
  */
 public class Duration {
-    public enum _Duration {
-        QUARTER,
-        EIGHT
-    };
-
     private _Duration myDuration;
+
+    public Duration(_Duration duration) {
+        myDuration = duration;
+    }
 
     /**
      * Get the duration
+     *
      * @return myDuration
      */
     public _Duration getMyDuration() {
         return myDuration;
+    }
+
+    /**
+     * Set duration
+     *
+     * @param newDuration
+     */
+    public void setMyDuration(_Duration newDuration) {
+        myDuration = newDuration;
     }
 
     /**
@@ -30,15 +38,9 @@ public class Duration {
     public int getDurationValue() {
         return ((myDuration == _Duration.QUARTER) ? 4 : 8);
     }
-    /**
-     * Set duration
-     * @param newDuration
-     */
-    public void setMyDuration(_Duration newDuration) {
-        myDuration = newDuration;
-    }
 
-    public Duration(_Duration duration){
-        myDuration = duration;
+    public enum _Duration {
+        QUARTER,
+        EIGHT
     }
 }

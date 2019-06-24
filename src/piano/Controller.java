@@ -1,19 +1,10 @@
 package piano;
 
-import com.sun.glass.ui.CommonDialogs;
-import com.sun.prism.impl.Disposer;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.*;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
-import javafx.scene.layout.CornerRadii;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.QuadCurve;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -22,17 +13,15 @@ import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiUnavailableException;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Optional;
 
-import java.util.Queue;
-
-import static java.lang.Thread.currentThread;
-import static java.lang.Thread.sleep;
-
 public class Controller {
+    static boolean isNote = true;
+    static boolean autoplayOn = false;
+    private static Stage primaryStage;
+    final HashMap<Character, Button> charButtonBinding = new HashMap<>();
     public Button E5;
     public Button C2;
     public Button D2;
@@ -93,8 +82,6 @@ public class Controller {
     public Button CS4;
     public Button B4;
     public Button A4;
-
-
     public Button Record;
     public Button stopRecordButton;
     public Button Play;
@@ -102,22 +89,22 @@ public class Controller {
     public Button Pause;
     public Button AutoPlay;
     public Canvas MyCanvas;
-
     public Label compositionPath;
     public Button compositionChooseButton;
-    ArrayList<Button> keyboardReferences;
-
-    public ComboBox instrumentCombobox;
+    public ComboBox<String> instrumentCombobox;
     public RadioButton showNotesRadioButton;
     public RadioButton showKeysRadioButton;
-
     public Button txtButton;
     public Button midiButton;
     public Button setInstrumentButton;
     public Button rememberChoiceButton;
-
+    ArrayList<Button> keyboardReferences;
     private Player player;
     private Composition newComposition = new Composition();
+    private Main myModel;
+    private boolean recording = false;
+    private Recorder recorder;
+    private ArrayList<ContainerClass> buttonColors = new ArrayList<>();
 
     {
         try {
@@ -130,7 +117,118 @@ public class Controller {
 
         keyboardReferences = new ArrayList<>();
     }
-    public final HashMap<Character, Button> charButtonBinding = new HashMap<>();
+
+    static void setPrimaryStage(Stage stage) {
+        primaryStage = stage;
+    }
+
+    // Za akord, svi zajedno treba da budu manji od 100
+    // Za ostalo samo treba da gledas razliku izmedju susedna dva
+    private static ArrayList<MusicSymbol> formatRecording(ArrayList<RecorderData> rawRecording) {
+        class TypeRecord {
+            private RecorderData data;
+            private char Type;
+
+            private TypeRecord(RecorderData data, char Type) {
+                this.data = data;
+                this.Type = Type;
+            }
+        }
+        final long chordDifference = 50;
+        final long quarterTick = 550;
+        final long eightTick = 250;
+        ArrayList<Long> timeDifference = new ArrayList<>();
+        if (rawRecording.size() == 1)
+            timeDifference.add(1000L);
+        for (int i = 0; i < rawRecording.size() - 1; i++) {
+            timeDifference.add(rawRecording.get(i + 1).timestamp - rawRecording.get(i).timestamp);
+        }
+        ArrayList<TypeRecord> tr = new ArrayList<>();
+        boolean isChordFlag = false;
+        for (int i = 0; i < timeDifference.size(); i++) {
+            if (timeDifference.get(i) <= chordDifference) {
+                if (!isChordFlag)
+                    isChordFlag = true;
+                tr.add(new TypeRecord(rawRecording.get(i), 'c'));
+            } else if (timeDifference.get(i) > chordDifference && timeDifference.get(i) <= eightTick) {
+                if (isChordFlag) {
+                    isChordFlag = false;
+                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
+                } else {
+                    tr.add(new TypeRecord(rawRecording.get(i), 'e'));
+                }
+            } else if (timeDifference.get(i) > eightTick && timeDifference.get(i) <= quarterTick) {
+                if (isChordFlag) {
+                    isChordFlag = false;
+                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
+                } else {
+                    tr.add(new TypeRecord(rawRecording.get(i), 'q'));
+                }
+            } else if (timeDifference.get(i) > quarterTick) {
+                if (isChordFlag) {
+                    isChordFlag = false;
+                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
+                } else {
+                    int numberOfPause = (int) (timeDifference.get(i) / quarterTick);
+                    tr.add(new TypeRecord(rawRecording.get(i), 'q'));
+                    for (int p = 0; p < numberOfPause; p++)
+                        tr.add(new TypeRecord(null, 'p'));
+                }
+            }
+        }
+        if (rawRecording.size() > 1) {
+            tr.add(new TypeRecord(rawRecording.get(rawRecording.size() - 1), tr.get(tr.size() - 1).Type));
+        }
+        ArrayList<MusicSymbol> formattedMusic = new ArrayList<>();
+        char noteSymbol;
+        int midiValue;
+        String noteName;
+        Duration noteDuration;
+        Note note;
+        for (int i = 0; i < tr.size(); i++) {
+            switch (tr.get(i).Type) {
+                case 'c':
+                    ArrayList<Note> notesToImport = new ArrayList<>();
+                    while (i < tr.size()) {
+                        noteSymbol = tr.get(i).data.symbol;
+                        midiValue = Composition.charToIntMapping.get(noteSymbol);
+                        noteName = Composition.characterNameMapping.get(noteSymbol);
+                        noteDuration = new Duration(Duration._Duration.QUARTER);
+                        note = new Note(noteDuration, midiValue, noteSymbol, noteName);
+                        notesToImport.add(note);
+                        if (tr.get(i).Type == 'C')
+                            break;
+                        i++;
+                    }
+                    Chord chordToImport = new Chord(notesToImport, new Duration(Duration._Duration.QUARTER));
+                    formattedMusic.add(chordToImport);
+                    break;
+                case 'e':
+                    noteSymbol = tr.get(i).data.symbol;
+                    midiValue = Composition.charToIntMapping.get(noteSymbol);
+                    noteName = Composition.characterNameMapping.get(noteSymbol);
+                    noteDuration = new Duration(Duration._Duration.EIGHT);
+                    note = new Note(noteDuration, midiValue, noteSymbol, noteName);
+                    formattedMusic.add(note);
+                    break;
+                case 'q':
+                    noteSymbol = tr.get(i).data.symbol;
+                    midiValue = Composition.charToIntMapping.get(noteSymbol);
+                    noteName = Composition.characterNameMapping.get(noteSymbol);
+                    noteDuration = new Duration(Duration._Duration.QUARTER);
+                    note = new Note(noteDuration, midiValue, noteSymbol, noteName);
+                    formattedMusic.add(note);
+                    break;
+                case 'p':
+                    formattedMusic.add(new Pause(new Duration(Duration._Duration.QUARTER)));
+                    break;
+                default:
+                    break;
+            }
+        }
+        return formattedMusic;
+    }
+
     @FXML
     public void initialize() {
         keyboardReferences.add(C2);
@@ -329,134 +427,67 @@ public class Controller {
         instrumentCombobox.setValue("Choose an instrument");
         player.setMyCanvas(MyCanvas);
 
-        charButtonBinding.put('1',C2);
-        charButtonBinding.put('2',D2);
-        charButtonBinding.put('3',E2);
-        charButtonBinding.put('4',F2);
-        charButtonBinding.put('5',G2);
-        charButtonBinding.put('6',A2);
-        charButtonBinding.put('7',B2);
-        charButtonBinding.put('!',CS2);
-        charButtonBinding.put('@',DS2);
-        charButtonBinding.put('$',FS2);
-        charButtonBinding.put('%',GS2);
-        charButtonBinding.put('^',AS2);
-        charButtonBinding.put('8',C3);
-        charButtonBinding.put('9',D3);
-        charButtonBinding.put('0',E3);
-        charButtonBinding.put('q',F3);
-        charButtonBinding.put('w',G3);
-        charButtonBinding.put('e',A3);
-        charButtonBinding.put('r',B3);
-        charButtonBinding.put('*',CS3);
-        charButtonBinding.put('(',DS3);
-        charButtonBinding.put('Q',FS3);
-        charButtonBinding.put('W',GS3);
-        charButtonBinding.put('E',AS3);
-        charButtonBinding.put('t',C4);
-        charButtonBinding.put('y',D4);
-        charButtonBinding.put('u',E4);
-        charButtonBinding.put('i',F4);
-        charButtonBinding.put('o',G4);
-        charButtonBinding.put('p',A4);
-        charButtonBinding.put('a',B4);
-        charButtonBinding.put('T',CS4);
-        charButtonBinding.put('Y',DS4);
-        charButtonBinding.put('I',FS4);
-        charButtonBinding.put('O',GS4);
-        charButtonBinding.put('P',AS4);
-        charButtonBinding.put('s',C5);
-        charButtonBinding.put('d',D5);
-        charButtonBinding.put('f',E5);
-        charButtonBinding.put('g',F5);
-        charButtonBinding.put('h',G5);
-        charButtonBinding.put('j',A5);
-        charButtonBinding.put('k',B5);
-        charButtonBinding.put('S',CS5);
-        charButtonBinding.put('D',DS5);
-        charButtonBinding.put('G',FS5);
-        charButtonBinding.put('H',GS5);
-        charButtonBinding.put('J',AS5);
-        charButtonBinding.put('l',C6);
-        charButtonBinding.put('z',D6);
-        charButtonBinding.put('x',E6);
-        charButtonBinding.put('c',F6);
-        charButtonBinding.put('v',G6);
-        charButtonBinding.put('b',A6);
-        charButtonBinding.put('n',B6);
-        charButtonBinding.put('L',CS6);
-        charButtonBinding.put('Z',DS6);
-        charButtonBinding.put('C',FS6);
-        charButtonBinding.put('V',GS6);
-        charButtonBinding.put('B',AS6);
-        charButtonBinding.put('1',C2);
-        charButtonBinding.put('2',D2);
-        charButtonBinding.put('3',E2);
-        charButtonBinding.put('4',F2);
-        charButtonBinding.put('5',G2);
-        charButtonBinding.put('6',A2);
-        charButtonBinding.put('7',B2);
-        charButtonBinding.put('!',CS2);
-        charButtonBinding.put('@',DS2);
-        charButtonBinding.put('$',FS2);
-        charButtonBinding.put('%',GS2);
-        charButtonBinding.put('^',AS2);
-        charButtonBinding.put('8',C3);
-        charButtonBinding.put('9',D3);
-        charButtonBinding.put('0',E3);
-        charButtonBinding.put('q',F3);
-        charButtonBinding.put('w',G3);
-        charButtonBinding.put('e',A3);
-        charButtonBinding.put('r',B3);
-        charButtonBinding.put('*',CS3);
-        charButtonBinding.put('(',DS3);
-        charButtonBinding.put('Q',FS3);
-        charButtonBinding.put('W',GS3);
-        charButtonBinding.put('E',AS3);
-        charButtonBinding.put('t',C4);
-        charButtonBinding.put('y',D4);
-        charButtonBinding.put('u',E4);
-        charButtonBinding.put('i',F4);
-        charButtonBinding.put('o',G4);
-        charButtonBinding.put('p',A4);
-        charButtonBinding.put('a',B4);
-        charButtonBinding.put('T',CS4);
-        charButtonBinding.put('Y',DS4);
-        charButtonBinding.put('I',FS4);
-        charButtonBinding.put('O',GS4);
-        charButtonBinding.put('P',AS4);
-        charButtonBinding.put('s',C5);
-        charButtonBinding.put('d',D5);
-        charButtonBinding.put('f',E5);
-        charButtonBinding.put('g',F5);
-        charButtonBinding.put('h',G5);
-        charButtonBinding.put('j',A5);
-        charButtonBinding.put('k',B5);
-        charButtonBinding.put('S',CS5);
-        charButtonBinding.put('D',DS5);
-        charButtonBinding.put('G',FS5);
-        charButtonBinding.put('H',GS5);
-        charButtonBinding.put('J',AS5);
-        charButtonBinding.put('l',C6);
-        charButtonBinding.put('z',D6);
-        charButtonBinding.put('x',E6);
-        charButtonBinding.put('c',F6);
-        charButtonBinding.put('v',G6);
-        charButtonBinding.put('b',A6);
-        charButtonBinding.put('n',B6);
-        charButtonBinding.put('L',CS6);
-        charButtonBinding.put('Z',DS6);
-        charButtonBinding.put('C',FS6);
-        charButtonBinding.put('V',GS6);
-        charButtonBinding.put('B',AS6);
+        charButtonBinding.put('1', C2);
+        charButtonBinding.put('2', D2);
+        charButtonBinding.put('3', E2);
+        charButtonBinding.put('4', F2);
+        charButtonBinding.put('5', G2);
+        charButtonBinding.put('6', A2);
+        charButtonBinding.put('7', B2);
+        charButtonBinding.put('!', CS2);
+        charButtonBinding.put('@', DS2);
+        charButtonBinding.put('$', FS2);
+        charButtonBinding.put('%', GS2);
+        charButtonBinding.put('^', AS2);
+        charButtonBinding.put('8', C3);
+        charButtonBinding.put('9', D3);
+        charButtonBinding.put('0', E3);
+        charButtonBinding.put('q', F3);
+        charButtonBinding.put('w', G3);
+        charButtonBinding.put('e', A3);
+        charButtonBinding.put('r', B3);
+        charButtonBinding.put('*', CS3);
+        charButtonBinding.put('(', DS3);
+        charButtonBinding.put('Q', FS3);
+        charButtonBinding.put('W', GS3);
+        charButtonBinding.put('E', AS3);
+        charButtonBinding.put('t', C4);
+        charButtonBinding.put('y', D4);
+        charButtonBinding.put('u', E4);
+        charButtonBinding.put('i', F4);
+        charButtonBinding.put('o', G4);
+        charButtonBinding.put('p', A4);
+        charButtonBinding.put('a', B4);
+        charButtonBinding.put('T', CS4);
+        charButtonBinding.put('Y', DS4);
+        charButtonBinding.put('I', FS4);
+        charButtonBinding.put('O', GS4);
+        charButtonBinding.put('P', AS4);
+        charButtonBinding.put('s', C5);
+        charButtonBinding.put('d', D5);
+        charButtonBinding.put('f', E5);
+        charButtonBinding.put('g', F5);
+        charButtonBinding.put('h', G5);
+        charButtonBinding.put('j', A5);
+        charButtonBinding.put('k', B5);
+        charButtonBinding.put('S', CS5);
+        charButtonBinding.put('D', DS5);
+        charButtonBinding.put('G', FS5);
+        charButtonBinding.put('H', GS5);
+        charButtonBinding.put('J', AS5);
+        charButtonBinding.put('l', C6);
+        charButtonBinding.put('z', D6);
+        charButtonBinding.put('x', E6);
+        charButtonBinding.put('c', F6);
+        charButtonBinding.put('v', G6);
+        charButtonBinding.put('b', A6);
+        charButtonBinding.put('n', B6);
+        charButtonBinding.put('L', CS6);
+        charButtonBinding.put('Z', DS6);
+        charButtonBinding.put('C', FS6);
+        charButtonBinding.put('V', GS6);
+        charButtonBinding.put('B', AS6);
 
-    }
-    static boolean autoplayOn = false;
-
-    private static Stage primaryStage;
-
-    static void setPrimaryStage(Stage stage){
-        primaryStage = stage;
     }
 
     public void loadComposition() {
@@ -464,6 +495,8 @@ public class Controller {
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
         fileChooser.getExtensionFilters().add(extFilter);
         File file = fileChooser.showOpenDialog(primaryStage);
+        if (file == null)
+            return;
         newComposition = new Composition();
         newComposition.readFromFile(file.getAbsolutePath());
         compositionPath.setText(file.getName());
@@ -472,17 +505,15 @@ public class Controller {
     }
 
     public void changeInstrument() {
-        String[] dataArray = instrumentCombobox.getValue().toString().split(". ");
+        String[] dataArray = instrumentCombobox.getValue().split(". ");
         player.setMyInstrument(Integer.parseInt(dataArray[0]));
     }
 
-    public Player getPlayer(){
+    Player getPlayer() {
         return player;
     }
 
-    public static boolean isNote = true;
-
-    public void changeView(){
+    public void changeView() {
         isNote = showNotesRadioButton.isSelected();
         player.print();
     }
@@ -507,7 +538,6 @@ public class Controller {
         t.start();
     }
 
-
     public void pause() {
         if (player.threadReferenceSet())
             player.pausePlay();
@@ -523,16 +553,15 @@ public class Controller {
             player.resumePlay();
     }
 
-
-    public void midiExport(){
+    public void midiExport() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        File path =  directoryChooser.showDialog(primaryStage);
+        File path = directoryChooser.showDialog(primaryStage);
         try {
             player.exportToMidi(path.getAbsolutePath());
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setHeaderText(null);
             alert.setTitle("Export information");
-            alert.setContentText("The composition was successfully exported to \n"+path.getAbsolutePath()+"!");
+            alert.setContentText("The composition was successfully exported to \n" + path.getAbsolutePath() + "!");
 
             alert.showAndWait();
         } catch (CompositionNotLoadedException | InvalidMidiDataException | IOException e) {
@@ -540,32 +569,29 @@ public class Controller {
         }
     }
 
-    private Main myModel;
-
-    void setModel(Main myModel){
+    void setModel(Main myModel) {
         this.myModel = myModel;
         myModel.setMyController(this);
     }
 
-
-    public void txtExport(){
+    public void txtExport() {
         DirectoryChooser directoryChooser = new DirectoryChooser();
-        File path =  directoryChooser.showDialog(primaryStage);
+        File path = directoryChooser.showDialog(primaryStage);
         try {
             player.exportToTxt(path.getAbsolutePath());
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setHeaderText(null);
             alert.setTitle("Export information");
-            alert.setContentText("The composition was successfully exported to \n"+path.getAbsolutePath()+"!");
+            alert.setContentText("The composition was successfully exported to \n" + path.getAbsolutePath() + "!");
             alert.showAndWait();
 
-        } catch (CompositionNotLoadedException  e) {
+        } catch (CompositionNotLoadedException e) {
             e.printStackTrace();
         }
     }
 
     void playNote(int m) {
-        class Sleeper extends Thread{
+        class Sleeper extends Thread {
             @Override
             public void run() {
                 player.play(m);
@@ -580,16 +606,20 @@ public class Controller {
         new Sleeper().start();
 
         MusicSymbol temp = player.getCurrentSymbol();
-        if(temp != null){
-            if (temp instanceof Note){
-               if(temp.getNotes().get(0) == m){
-                   player.updateCurrentNote();
-               }
+        if (temp != null) {
+            if (temp instanceof Note) {
+                if (temp.getNotes().get(0) == m) {
+                    player.updateCurrentNote();
+                }
             }
-
+            if (temp instanceof Chord){
+                if ((temp).getNotes().contains(m)){
+                    player.updateCurrentNote();
+                }
+            }
         }
 
-        if (recording){
+        if (recording) {
             recorder.insertNote(new RecorderData(Composition.integerToCharacterMapping.get(m), System.currentTimeMillis()));
         }
     }
@@ -834,137 +864,7 @@ public class Controller {
         playNote(Composition.charToIntMapping.get(Composition.nameToCharachterHashMapping.get("A#6")));
     }
 
-
-    private boolean recording = false;
-    public boolean isRecording() { return recording;}
-
-    class Recorder {
-        ArrayList<RecorderData> recorderData;
-
-        Recorder(ArrayList<RecorderData> recorderComposition) {
-            recorderData = recorderComposition;
-        }
-
-        void insertNote(RecorderData data){
-            recorderData.add(data);
-        }
-
-
-    }
-
-    private Recorder recorder;
-
-    // Za akord, svi zajedno treba da budu manji od 100
-    // Za ostalo samo treba da gledas razliku izmedju susedna dva
-    private static ArrayList<MusicSymbol> formatRecording(ArrayList<RecorderData> rawRecording){
-        class TypeRecord {
-            private RecorderData data;
-            private char Type;
-            private TypeRecord(RecorderData data, char Type){
-                this.data = data;
-                this.Type = Type;
-            }
-        }
-        final long chordDifference = 100;
-        final long quarterTick = 600;
-        final long eightTick = 300;
-        ArrayList<Long> timeDifference = new ArrayList<>();
-        if (rawRecording.size() == 1)
-            timeDifference.add(1000L);
-        for (int i = 0; i < rawRecording.size() - 1; i++){
-            timeDifference.add(rawRecording.get(i+1).timestamp - rawRecording.get(i).timestamp);
-        }
-        ArrayList<TypeRecord> tr = new ArrayList<>();
-        boolean isChordFlag = false;
-        for (int i = 0; i < timeDifference.size(); i++){
-            if (timeDifference.get(i) <= chordDifference){
-                if (!isChordFlag)
-                    isChordFlag = true;
-                tr.add(new TypeRecord(rawRecording.get(i), 'c'));
-            } else if(timeDifference.get(i) > chordDifference && timeDifference.get(i) <= eightTick){
-                if (isChordFlag) {
-                    isChordFlag = false;
-                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
-                } else {
-                    tr.add(new TypeRecord(rawRecording.get(i), 'e'));
-                }
-            } else if(timeDifference.get(i) > eightTick && timeDifference.get(i) <= quarterTick){
-                if (isChordFlag) {
-                    isChordFlag = false;
-                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
-                } else {
-                    tr.add(new TypeRecord(rawRecording.get(i), 'q'));
-                }
-            } else if (timeDifference.get(i) > quarterTick){
-                if (isChordFlag) {
-                    isChordFlag = false;
-                    tr.add(new TypeRecord(rawRecording.get(i), 'C'));
-                } else {
-                    int numberOfPause = (int)(timeDifference.get(i)/quarterTick);
-                    tr.add(new TypeRecord(rawRecording.get(i), 'q'));
-                    for (int p = 0; p < numberOfPause; p++)
-                        tr.add(new TypeRecord(null, 'p'));
-                }
-            }
-        }
-        if(rawRecording.size() > 1) {
-            tr.add(new TypeRecord(rawRecording.get(rawRecording.size() - 1), rawRecording.get(rawRecording.size() - 2).symbol));
-        } else {
-            tr.add(new TypeRecord(rawRecording.get(0), rawRecording.get(0).symbol));
-        }
-        ArrayList<MusicSymbol> formattedMusic = new ArrayList<>();
-        char noteSymbol;
-        int midiValue;
-        String noteName;
-        Duration noteDuration;
-        Note note;
-        for (int i = 0; i < tr.size(); i++) {
-            switch (tr.get(i).Type){
-                case 'c':
-                    ArrayList<Note> notesToImport = new ArrayList<>();
-                    while (i < tr.size()) {
-                        noteSymbol = tr.get(i).data.symbol;
-                        midiValue = Composition.charToIntMapping.get(noteSymbol);
-                        noteName =  Composition.characterNameMapping.get(noteSymbol);
-                        noteDuration = new Duration(Duration._Duration.QUARTER);
-                        note = new Note(noteDuration,midiValue,noteSymbol,noteName);
-                        notesToImport.add(note);
-                        if (tr.get(i).Type == 'C')
-                            break;
-                        i++;
-                    }
-                    Chord chordToImport = new Chord(notesToImport, new Duration(Duration._Duration.QUARTER));
-                    formattedMusic.add(chordToImport);
-                    break;
-                case 'e':
-                    noteSymbol = tr.get(i).data.symbol;
-                    midiValue = Composition.charToIntMapping.get(noteSymbol);
-                    noteName =  Composition.characterNameMapping.get(noteSymbol);
-                    noteDuration = new Duration(Duration._Duration.EIGHT);
-                    note = new Note(noteDuration,midiValue,noteSymbol,noteName);
-                    formattedMusic.add(note);
-                    break;
-                case 'q':
-                    noteSymbol = tr.get(i).data.symbol;
-                    midiValue = Composition.charToIntMapping.get(noteSymbol);
-                    noteName =  Composition.characterNameMapping.get(noteSymbol);
-                    noteDuration = new Duration(Duration._Duration.QUARTER);
-                    note = new Note(noteDuration,midiValue,noteSymbol,noteName);
-                    formattedMusic.add(note);
-                    break;
-                case 'p':
-                    formattedMusic.add(new Pause(new Duration(Duration._Duration.QUARTER)));
-                    break;
-                    default:
-                        break;
-            }
-        }
-
-
-        return formattedMusic;
-    }
-
-    public void stopRecording (){
+    public void stopRecording() {
         instrumentCombobox.setDisable(false);
         midiButton.setDisable(false);
         txtButton.setDisable(false);
@@ -986,7 +886,7 @@ public class Controller {
         newCompositon.importNotes(formatRecording(recorder.recorderData));
         player.setMyComposition(newCompositon);
 
-        compositionPath.setText( result.get() + ".txt");
+        compositionPath.setText(Composition.extractFilename(newCompositon.getMyCompositionTxtFile()) + ".txt");
 
     }
 
@@ -1011,515 +911,501 @@ public class Controller {
 
     }
 
-    public void thisKeyPressedC2(){
+    public void thisKeyPressedC2() {
         colorButton(C2);
     }
 
-    public void thisKeyReleasedC2(){
+    public void thisKeyReleasedC2() {
         unColorButton(C2);
     }
 
-    public void thisKeyPressedD2(){
+    public void thisKeyPressedD2() {
         colorButton(D2);
     }
 
-    public void thisKeyReleasedD2(){
+    public void thisKeyReleasedD2() {
         unColorButton(D2);
     }
 
-    public void thisKeyPressedE2(){
+    public void thisKeyPressedE2() {
         colorButton(E2);
     }
 
-    public void thisKeyReleasedE2(){
+    public void thisKeyReleasedE2() {
         unColorButton(E2);
     }
 
-    public void thisKeyPressedF2(){
+    public void thisKeyPressedF2() {
         colorButton(F2);
     }
 
-    public void thisKeyReleasedF2(){
+    public void thisKeyReleasedF2() {
         unColorButton(F2);
     }
 
-    public void thisKeyPressedG2(){
+    public void thisKeyPressedG2() {
         colorButton(G2);
     }
 
-    public void thisKeyReleasedG2(){
+    public void thisKeyReleasedG2() {
         unColorButton(G2);
     }
 
-    public void thisKeyPressedA2(){
+    public void thisKeyPressedA2() {
         colorButton(A2);
     }
 
-    public void thisKeyReleasedA2(){
+    public void thisKeyReleasedA2() {
         unColorButton(A2);
     }
 
-    public void thisKeyPressedB2(){
+    public void thisKeyPressedB2() {
         colorButton(B2);
     }
 
-    public void thisKeyReleasedB2(){
+    public void thisKeyReleasedB2() {
         unColorButton(B2);
     }
 
-    public void thisKeyPressedCS2(){
+    public void thisKeyPressedCS2() {
         colorButton(CS2);
     }
 
-    public void thisKeyReleasedCS2(){
+    public void thisKeyReleasedCS2() {
         unColorButton(CS2);
     }
 
-    public void thisKeyPressedDS2(){
+    public void thisKeyPressedDS2() {
         colorButton(DS2);
     }
 
-    public void thisKeyReleasedDS2(){
+    public void thisKeyReleasedDS2() {
         unColorButton(DS2);
     }
 
-    public void thisKeyPressedFS2(){
+    public void thisKeyPressedFS2() {
         colorButton(FS2);
     }
 
-    public void thisKeyReleasedFS2(){
+    public void thisKeyReleasedFS2() {
         unColorButton(FS2);
     }
 
-    public void thisKeyPressedGS2(){
+    public void thisKeyPressedGS2() {
         colorButton(GS2);
     }
 
-    public void thisKeyReleasedGS2(){
+    public void thisKeyReleasedGS2() {
         unColorButton(GS2);
     }
 
-    public void thisKeyPressedAS2(){
+    public void thisKeyPressedAS2() {
         colorButton(AS2);
     }
 
-    public void thisKeyReleasedAS2(){
+    public void thisKeyReleasedAS2() {
         unColorButton(AS2);
     }
 
-    public void thisKeyPressedC3(){
+    public void thisKeyPressedC3() {
         colorButton(C3);
     }
 
-    public void thisKeyReleasedC3(){
+    public void thisKeyReleasedC3() {
         unColorButton(C3);
     }
 
-    public void thisKeyPressedD3(){
+    public void thisKeyPressedD3() {
         colorButton(D3);
     }
 
-    public void thisKeyReleasedD3(){
+    public void thisKeyReleasedD3() {
         unColorButton(D3);
     }
 
-    public void thisKeyPressedE3(){
+    public void thisKeyPressedE3() {
         colorButton(E3);
     }
 
-    public void thisKeyReleasedE3(){
+    public void thisKeyReleasedE3() {
         unColorButton(E3);
     }
 
-    public void thisKeyPressedF3(){
+    public void thisKeyPressedF3() {
         colorButton(F3);
     }
 
-    public void thisKeyReleasedF3(){
+    public void thisKeyReleasedF3() {
         unColorButton(F3);
     }
 
-    public void thisKeyPressedG3(){
+    public void thisKeyPressedG3() {
         colorButton(G3);
     }
 
-    public void thisKeyReleasedG3(){
+    public void thisKeyReleasedG3() {
         unColorButton(G3);
     }
 
-    public void thisKeyPressedA3(){
+    public void thisKeyPressedA3() {
         colorButton(A3);
     }
 
-    public void thisKeyReleasedA3(){
+    public void thisKeyReleasedA3() {
         unColorButton(A3);
     }
 
-    public void thisKeyPressedB3(){
+    public void thisKeyPressedB3() {
         colorButton(B3);
     }
 
-    public void thisKeyReleasedB3(){
+    public void thisKeyReleasedB3() {
         unColorButton(B3);
     }
 
-    public void thisKeyPressedCS3(){
+    public void thisKeyPressedCS3() {
         colorButton(CS3);
     }
 
-    public void thisKeyReleasedCS3(){
+    public void thisKeyReleasedCS3() {
         unColorButton(CS3);
     }
 
-    public void thisKeyPressedDS3(){
+    public void thisKeyPressedDS3() {
         colorButton(DS3);
     }
 
-    public void thisKeyReleasedDS3(){
+    public void thisKeyReleasedDS3() {
         unColorButton(DS3);
     }
 
-    public void thisKeyPressedFS3(){
+    public void thisKeyPressedFS3() {
         colorButton(FS3);
     }
 
-    public void thisKeyReleasedFS3(){
+    public void thisKeyReleasedFS3() {
         unColorButton(FS3);
     }
 
-    public void thisKeyPressedGS3(){
+    public void thisKeyPressedGS3() {
         colorButton(GS3);
     }
 
-    public void thisKeyReleasedGS3(){
+    public void thisKeyReleasedGS3() {
         unColorButton(GS3);
     }
 
-    public void thisKeyPressedAS3(){
+    public void thisKeyPressedAS3() {
         colorButton(AS3);
     }
 
-    public void thisKeyReleasedAS3(){
+    public void thisKeyReleasedAS3() {
         unColorButton(AS3);
     }
 
-    public void thisKeyPressedC4(){
+    public void thisKeyPressedC4() {
         colorButton(C4);
     }
 
-    public void thisKeyReleasedC4(){
+    public void thisKeyReleasedC4() {
         unColorButton(C4);
     }
 
-    public void thisKeyPressedD4(){
+    public void thisKeyPressedD4() {
         colorButton(D4);
     }
 
-    public void thisKeyReleasedD4(){
+    public void thisKeyReleasedD4() {
         unColorButton(D4);
     }
 
-    public void thisKeyPressedE4(){
+    public void thisKeyPressedE4() {
         colorButton(E4);
     }
 
-    public void thisKeyReleasedE4(){
+    public void thisKeyReleasedE4() {
         unColorButton(E4);
     }
 
-    public void thisKeyPressedF4(){
+    public void thisKeyPressedF4() {
         colorButton(F4);
     }
 
-    public void thisKeyReleasedF4(){
+    public void thisKeyReleasedF4() {
         unColorButton(F4);
     }
 
-    public void thisKeyPressedG4(){
+    public void thisKeyPressedG4() {
         colorButton(G4);
     }
 
-    public void thisKeyReleasedG4(){
+    public void thisKeyReleasedG4() {
         unColorButton(G4);
     }
 
-    public void thisKeyPressedA4(){
+    public void thisKeyPressedA4() {
         colorButton(A4);
     }
 
-    public void thisKeyReleasedA4(){
+    public void thisKeyReleasedA4() {
         unColorButton(A4);
     }
 
-    public void thisKeyPressedB4(){
+    public void thisKeyPressedB4() {
         colorButton(B4);
     }
 
-    public void thisKeyReleasedB4(){
+    public void thisKeyReleasedB4() {
         unColorButton(B4);
     }
 
-    public void thisKeyPressedCS4(){
+    public void thisKeyPressedCS4() {
         colorButton(CS4);
     }
 
-    public void thisKeyReleasedCS4(){
+    public void thisKeyReleasedCS4() {
         unColorButton(CS4);
     }
 
-    public void thisKeyPressedDS4(){
+    public void thisKeyPressedDS4() {
         colorButton(DS4);
     }
 
-    public void thisKeyReleasedDS4(){
+    public void thisKeyReleasedDS4() {
         unColorButton(DS4);
     }
 
-    public void thisKeyPressedFS4(){
+    public void thisKeyPressedFS4() {
         colorButton(FS4);
     }
 
-    public void thisKeyReleasedFS4(){
+    public void thisKeyReleasedFS4() {
         unColorButton(FS4);
     }
 
-    public void thisKeyPressedGS4(){
+    public void thisKeyPressedGS4() {
         colorButton(GS4);
     }
 
-    public void thisKeyReleasedGS4(){
+    public void thisKeyReleasedGS4() {
         unColorButton(GS4);
     }
 
-    public void thisKeyPressedAS4(){
+    public void thisKeyPressedAS4() {
         colorButton(AS4);
     }
 
-    public void thisKeyReleasedAS4(){
+    public void thisKeyReleasedAS4() {
         unColorButton(AS4);
     }
 
-    public void thisKeyPressedC5(){
+    public void thisKeyPressedC5() {
         colorButton(C5);
     }
 
-    public void thisKeyReleasedC5(){
+    public void thisKeyReleasedC5() {
         unColorButton(C5);
     }
 
-    public void thisKeyPressedD5(){
+    public void thisKeyPressedD5() {
         colorButton(D5);
     }
 
-    public void thisKeyReleasedD5(){
+    public void thisKeyReleasedD5() {
         unColorButton(D5);
     }
 
-    public void thisKeyPressedE5(){
+    public void thisKeyPressedE5() {
         colorButton(E5);
     }
 
-    public void thisKeyReleasedE5(){
+    public void thisKeyReleasedE5() {
         unColorButton(E5);
     }
 
-    public void thisKeyPressedF5(){
+    public void thisKeyPressedF5() {
         colorButton(F5);
     }
 
-    public void thisKeyReleasedF5(){
+    public void thisKeyReleasedF5() {
         unColorButton(F5);
     }
 
-    public void thisKeyPressedG5(){
+    public void thisKeyPressedG5() {
         colorButton(G5);
     }
 
-    public void thisKeyReleasedG5(){
+    public void thisKeyReleasedG5() {
         unColorButton(G5);
     }
 
-    public void thisKeyPressedA5(){
+    public void thisKeyPressedA5() {
         colorButton(A5);
     }
 
-    public void thisKeyReleasedA5(){
+    public void thisKeyReleasedA5() {
         unColorButton(A5);
     }
 
-    public void thisKeyPressedB5(){
+    public void thisKeyPressedB5() {
         colorButton(B5);
     }
 
-    public void thisKeyReleasedB5(){
+    public void thisKeyReleasedB5() {
         unColorButton(B5);
     }
 
-    public void thisKeyPressedCS5(){
+    public void thisKeyPressedCS5() {
         colorButton(CS5);
     }
 
-    public void thisKeyReleasedCS5(){
+    public void thisKeyReleasedCS5() {
         unColorButton(CS5);
     }
 
-    public void thisKeyPressedDS5(){
+    public void thisKeyPressedDS5() {
         colorButton(DS5);
     }
 
-    public void thisKeyReleasedDS5(){
+    public void thisKeyReleasedDS5() {
         unColorButton(DS5);
     }
 
-    public void thisKeyPressedFS5(){
+    public void thisKeyPressedFS5() {
         colorButton(FS5);
     }
 
-    public void thisKeyReleasedFS5(){
+    public void thisKeyReleasedFS5() {
         unColorButton(FS5);
     }
 
-    public void thisKeyPressedGS5(){
+    public void thisKeyPressedGS5() {
         colorButton(GS5);
     }
 
-    public void thisKeyReleasedGS5(){
+    public void thisKeyReleasedGS5() {
         unColorButton(GS5);
     }
 
-    public void thisKeyPressedAS5(){
+    public void thisKeyPressedAS5() {
         colorButton(AS5);
     }
 
-    public void thisKeyReleasedAS5(){
+    public void thisKeyReleasedAS5() {
         unColorButton(AS5);
     }
 
-    public void thisKeyPressedC6(){
+    public void thisKeyPressedC6() {
         colorButton(C6);
     }
 
-    public void thisKeyReleasedC6(){
+    public void thisKeyReleasedC6() {
         unColorButton(C6);
     }
 
-    public void thisKeyPressedD6(){
+    public void thisKeyPressedD6() {
         colorButton(D6);
     }
 
-    public void thisKeyReleasedD6(){
+    public void thisKeyReleasedD6() {
         unColorButton(D6);
     }
 
-    public void thisKeyPressedE6(){
+    public void thisKeyPressedE6() {
         colorButton(E6);
     }
 
-    public void thisKeyReleasedE6(){
+    public void thisKeyReleasedE6() {
         unColorButton(E6);
     }
 
-    public void thisKeyPressedF6(){
+    public void thisKeyPressedF6() {
         colorButton(F6);
     }
 
-    public void thisKeyReleasedF6(){
+    public void thisKeyReleasedF6() {
         unColorButton(F6);
     }
 
-    public void thisKeyPressedG6(){
+    public void thisKeyPressedG6() {
         colorButton(G6);
     }
 
-    public void thisKeyReleasedG6(){
+    public void thisKeyReleasedG6() {
         unColorButton(G6);
     }
 
-    public void thisKeyPressedA6(){
+    public void thisKeyPressedA6() {
         colorButton(A6);
     }
 
-    public void thisKeyReleasedA6(){
+    public void thisKeyReleasedA6() {
         unColorButton(A6);
     }
 
-    public void thisKeyPressedB6(){
+    public void thisKeyPressedB6() {
         colorButton(B6);
     }
 
-    public void thisKeyReleasedB6(){
+    public void thisKeyReleasedB6() {
         unColorButton(B6);
     }
 
-    public void thisKeyPressedCS6(){
+    public void thisKeyPressedCS6() {
         colorButton(CS6);
     }
 
-    public void thisKeyReleasedCS6(){
+    public void thisKeyReleasedCS6() {
         unColorButton(CS6);
     }
 
-    public void thisKeyPressedDS6(){
+    public void thisKeyPressedDS6() {
         colorButton(DS6);
     }
 
-    public void thisKeyReleasedDS6(){
+    public void thisKeyReleasedDS6() {
         unColorButton(DS6);
     }
 
-    public void thisKeyPressedFS6(){
+    public void thisKeyPressedFS6() {
         colorButton(FS6);
     }
 
-    public void thisKeyReleasedFS6(){
+    public void thisKeyReleasedFS6() {
         unColorButton(FS6);
     }
 
-    public void thisKeyPressedGS6(){
+    public void thisKeyPressedGS6() {
         colorButton(GS6);
     }
 
-    public void thisKeyReleasedGS6(){
+    public void thisKeyReleasedGS6() {
         unColorButton(GS6);
     }
 
-    public void thisKeyPressedAS6(){
+    public void thisKeyPressedAS6() {
         colorButton(AS6);
     }
 
-    public void thisKeyReleasedAS6(){
+    public void thisKeyReleasedAS6() {
         unColorButton(AS6);
     }
 
-
-    class ContainerClass {
-        Button button;
-        String previous;
-
-        public ContainerClass(Button button, String previous) {
-            this.button = button;
-            this.previous = previous;
-        }
-    }
-    private ArrayList<ContainerClass> buttonColors = new ArrayList<>();
-
-
-    public void colorButton(Button id){
+    void colorButton(Button id) {
         for (ContainerClass c :
                 buttonColors) {
             if (c.button == id) {
                 return;
             }
-
         }
         buttonColors.add(new ContainerClass(id, id.getStyle()));
         id.setStyle("-fx-background-color:#7f7f7f");
     }
-    public void unColorButton(Button id){
-        ContainerClass cc = null;
+
+    void unColorButton(Button id) {
+        ContainerClass cc;
         for (int i = 0; i < buttonColors.size(); i++)
-            if (buttonColors.get(i).button.equals(id))
-            {
+            if (buttonColors.get(i).button.equals(id)) {
                 cc = buttonColors.get(i);
                 buttonColors.remove(i);
                 id.setStyle(cc.previous);
@@ -1527,6 +1413,25 @@ public class Controller {
             }
     }
 
+    class Recorder {
+        ArrayList<RecorderData> recorderData;
 
+        Recorder(ArrayList<RecorderData> recorderComposition) {
+            recorderData = recorderComposition;
+        }
 
+        void insertNote(RecorderData data) {
+            recorderData.add(data);
+        }
+
+    }
+    class ContainerClass {
+        Button button;
+        String previous;
+
+        ContainerClass(Button button, String previous) {
+            this.button = button;
+            this.previous = previous;
+        }
+    }
 }

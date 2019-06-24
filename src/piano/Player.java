@@ -1,6 +1,5 @@
 package piano;
 
-import com.sun.javafx.css.CalculatedValue;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
@@ -12,25 +11,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.stream.StreamSupport;
 
 /**
  * TODO
- *
+ * <p>
  * Iskomentarisi sve i popravi.
  * Napravi API za koriscenje plejera jer ces imati nit
  * koja ce da trci po notama
- *
- *
+ * <p>
+ * <p>
  * Kul bi bilo kada bi stavio i da se menjaju instrumenti sa nekom listom
  * metodom koja menja instrument. Izmeni malo da ne bude bas sve static
  * i tako to
- *
- *
+ * <p>
+ * <p>
  * Buduci ja -> odoh ja da sad ucim OS da ne bi sjebao ispit sad u sredu...
  * Nek nam je bog na pomoci.....
- *
- *
  */
 
 
@@ -174,7 +170,7 @@ All midi instruments
 128.Gunshot
  */
 
-public class Player extends Thread{
+public class Player extends Thread {
     /**
      * Static field which is used as the first instrument
      * from 127 instruments that can be used in java
@@ -186,48 +182,11 @@ public class Player extends Thread{
     private int myInstrument;
     private MidiChannel channel;
     private int currentSymbol;
-
-    /**
-     * This method is used to get the reference to the composition
-     * that is being referenved inside this player object
-     *
-     * @return Composition reference
-     */
-    public Composition getMyComposition() {
-        return myComposition;
-    }
-
-    /**
-     * This method is used to set the Composition reference.
-     * @param composition Composition reference
-     */
-    public void setMyComposition(Composition composition){
-        myComposition = composition;
-        currentSymbol = 0;
-        print();
-    }
-
-
-    /**
-     * Get Player's instrument
-     * @return Integer value that is used to indicate the type of instrument
-     * used in the current Player object
-     */
-    public int getMyInstrument() {
-        return myInstrument;
-    }
-
-    /**
-     * Used to set a new instrument for the current channel. There's a shit ton of
-     * instruments which you can look up on the internet
-     *
-     * @param newInstrument Integer value which represents the instrument
-     *                      instrument value for the channel
-     */
-    public void setMyInstrument (int newInstrument){
-        myInstrument = newInstrument;
-        channel.programChange(myInstrument);
-    }
+    private Controller ctrl;
+    private boolean isPaused = false;
+    private Thread myThread = null;
+    private boolean stop = false;
+    private Canvas myCanvas;
 
     /**
      * Default constructor for the player object. It sets
@@ -249,7 +208,7 @@ public class Player extends Thread{
      * @throws MidiUnavailableException This is thrown
      *                                  if the instrument doesn't exist
      */
-    public  Player(int instrument) throws MidiUnavailableException {
+    public Player(int instrument) throws MidiUnavailableException {
         channel = getChannel(1);
         myInstrument = instrument;
         myComposition = null;
@@ -258,24 +217,83 @@ public class Player extends Thread{
     }
 
     /**
+     * Private method to get the channel with the given parameter
+     *
+     * @param channel Channel number
+     * @return Returns the MidiChannel Object
+     * @throws MidiUnavailableException Thrown if channel unavailable, 16 max channels (1..16)
+     */
+    private static MidiChannel getChannel(int channel) throws MidiUnavailableException {
+        Synthesizer synthesizer = MidiSystem.getSynthesizer();
+        synthesizer.open();
+        return synthesizer.getChannels()[channel];
+    }
+
+    /**
+     * This method is used to get the reference to the composition
+     * that is being referenved inside this player object
+     *
+     * @return Composition reference
+     */
+    public Composition getMyComposition() {
+        return myComposition;
+    }
+
+    /**
+     * This method is used to set the Composition reference.
+     *
+     * @param composition Composition reference
+     */
+    public void setMyComposition(Composition composition) {
+        myComposition = composition;
+        currentSymbol = 0;
+        print();
+    }
+
+    /**
+     * Get Player's instrument
+     *
+     * @return Integer value that is used to indicate the type of instrument
+     * used in the current Player object
+     */
+    public int getMyInstrument() {
+        return myInstrument;
+    }
+
+    /**
+     * Used to set a new instrument for the current channel. There's a shit ton of
+     * instruments which you can look up on the internet
+     *
+     * @param newInstrument Integer value which represents the instrument
+     *                      instrument value for the channel
+     */
+    public void setMyInstrument(int newInstrument) {
+        myInstrument = newInstrument;
+        channel.programChange(myInstrument);
+    }
+
+    /**
      * Plays the given note. Sets the noteOn method of the MidiChannel object (press key)
+     *
      * @param note Note to be played
      */
-    public void play(final int note){
+    public void play(final int note) {
         channel.noteOn(note, 60);
     }
 
     /**
      * Plays the given note. Sets the noteOff method of the MidiChannel object (release key)
+     *
      * @param note Integer value which represents the Midi code for note
      */
-    public void release (final int note) {
+    public void release(final int note) {
         channel.noteOff(note, 60);
     }
 
     /**
      * Plays the given note for the given length of time
-     * @param note Integer value which represents the note
+     *
+     * @param note   Integer value which represents the note
      * @param length Long value which represents the note for which the note must be played
      * @throws InterruptedException This method uses sleep(..) which throws the InterruptedException
      */
@@ -288,13 +306,14 @@ public class Player extends Thread{
     /**
      * This method plays the chord. The chord is comprised of an array of integers, all notes
      * should be started immediately, and when the length runs out, all notes are released.
+     *
      * @param chordNotes ArrayList<Integer> Object contains all notes inside the chord
-     * @param length wait interval between noteOn and noteOff in ms.
+     * @param length     wait interval between noteOn and noteOff in ms.
      * @throws InterruptedException Contains the static method sleep which throws {@link InterruptedException}
      */
-    public void playChord(final ArrayList<Integer> chordNotes, final long length) throws InterruptedException{
-        for (Integer note:
-             chordNotes) {
+    public void playChord(final ArrayList<Integer> chordNotes, final long length) throws InterruptedException {
+        for (Integer note :
+                chordNotes) {
             play(note);
         }
         Thread.sleep(length);
@@ -302,28 +321,14 @@ public class Player extends Thread{
     }
 
     /**
-     * Private method to get the channel with the given parameter
-     * @param channel Channel number
-     * @return Returns the MidiChannel Object
-     * @throws MidiUnavailableException Thrown if channel unavailable, 16 max channels (1..16)
-     */
-    private static MidiChannel getChannel(int channel) throws MidiUnavailableException{
-        Synthesizer synthesizer = MidiSystem.getSynthesizer();
-        synthesizer.open();
-        return synthesizer.getChannels()[channel];
-    }
-
-
-
-    /**
      * This method is invoked when you want to play the Composition object.
-     *
+     * <p>
      * Possible errors include when the myComposition is not initialized. This should be
      * avoided by using the {@code setMyComposition(Composition newComposition)} method
      * inside the Player object
      */
     public void playComposition() {
-        if(myComposition != null){
+        if (myComposition != null) {
             ArrayList<MusicSymbol> compositionNotes = myComposition.getMyNotes();
 
             final int quarterTick = 300;
@@ -351,30 +356,28 @@ public class Player extends Thread{
         }
     }
 
-
     /**
-     *  This method is called when you need to export to MIDI file. The output filename will
-     *  be set to the Filename of the .txt notes file. If you export your recording, you will be
-     *  asked to name your session
-     *
-     *  This method MUST set the meta data (messages) to the midi format like Sysex, Track name, tempo
-     *  etc.
-     *
-     *  {@link MidiEvent}'s second constructor parameter is used to tell the exporter the tick value
-     *
+     * This method is called when you need to export to MIDI file. The output filename will
+     * be set to the Filename of the .txt notes file. If you export your recording, you will be
+     * asked to name your session
+     * <p>
+     * This method MUST set the meta data (messages) to the midi format like Sysex, Track name, tempo
+     * etc.
+     * <p>
+     * {@link MidiEvent}'s second constructor parameter is used to tell the exporter the tick value
      *
      * @throws CompositionNotLoadedException Composition myst be loaded to player! the exporter will throw this
      *                                       exception when the composition is not set or if there was an error with
      *                                       the file
-     * @throws InvalidMidiDataException {@link InvalidMidiDataException}
-     * @throws IOException {@link IOException}
+     * @throws InvalidMidiDataException      {@link InvalidMidiDataException}
+     * @throws IOException                   {@link IOException}
      */
     public void exportToMidi(String filePath)
 
             throws CompositionNotLoadedException,
-                    InvalidMidiDataException,
-                    IOException {
-        if(myComposition == null || myComposition.getMyNotes().size() <= 0){
+            InvalidMidiDataException,
+            IOException {
+        if (myComposition == null || myComposition.getMyNotes().size() <= 0) {
             throw new CompositionNotLoadedException();
         }
 
@@ -385,19 +388,19 @@ public class Player extends Thread{
          * This code creates the General MIDI Sysex data and adds it to the track
          *
          */
-        byte[] b = {(byte)0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte)0xF7};
+        byte[] b = {(byte) 0xF0, 0x7E, 0x7F, 0x09, 0x01, (byte) 0xF7};
         SysexMessage sm = new SysexMessage();
         sm.setMessage(b, 6);
-        MidiEvent midiEvent = new MidiEvent(sm,(long)0);
+        MidiEvent midiEvent = new MidiEvent(sm, (long) 0);
         myTrack.add(midiEvent);
 
         /*
          * This code sets the tempo with a meta message
          */
         MetaMessage metaMessage = new MetaMessage();
-        byte[] bt = {0x02, (byte)0x00, 0x00};
-        metaMessage.setMessage(0x51 ,bt, 3);
-        midiEvent = new MidiEvent(metaMessage,(long)0);
+        byte[] bt = {0x02, (byte) 0x00, 0x00};
+        metaMessage.setMessage(0x51, bt, 3);
+        midiEvent = new MidiEvent(metaMessage, (long) 0);
         myTrack.add(midiEvent);
 
         /*
@@ -406,18 +409,18 @@ public class Player extends Thread{
 
         metaMessage = new MetaMessage();
         String TrackName = Composition.extractFilename(myComposition.getMyCompositionTxtFile());
-        metaMessage.setMessage(0x03 ,TrackName.getBytes(), TrackName.length());
-        midiEvent = new MidiEvent(metaMessage,(long)0);
+        metaMessage.setMessage(0x03, TrackName.getBytes(), TrackName.length());
+        midiEvent = new MidiEvent(metaMessage, (long) 0);
         myTrack.add(midiEvent);
 
         /*
-          * This code sets omni mode -> this refers to the idea
-          * that the midi file will respond to any instrument
-          * on any channel
+         * This code sets omni mode -> this refers to the idea
+         * that the midi file will respond to any instrument
+         * on any channel
          */
         ShortMessage message = new ShortMessage();
-        message.setMessage(0xB0, 0x7D,0x00);
-        midiEvent = new MidiEvent(message,(long)0);
+        message.setMessage(0xB0, 0x7D, 0x00);
+        midiEvent = new MidiEvent(message, (long) 0);
         myTrack.add(midiEvent);
 
 
@@ -427,7 +430,7 @@ public class Player extends Thread{
 
         message = new ShortMessage();
         message.setMessage(0xC0, myInstrument, 0x00);
-        midiEvent = new MidiEvent(message,(long)0);
+        midiEvent = new MidiEvent(message, (long) 0);
         myTrack.add(midiEvent);
 
 
@@ -436,13 +439,13 @@ public class Player extends Thread{
         for (MusicSymbol ms :
                 compositionSymbols) {
 
-            if (ms instanceof Pause){
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
+            if (ms instanceof Pause) {
+                currentTick += (ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
                 continue;
             }
 
 
-            if(ms instanceof Note) {
+            if (ms instanceof Note) {
                 /*
                  * Adds the noteOn Event to the track
                  */
@@ -452,7 +455,7 @@ public class Player extends Thread{
                 myTrack.add(midiEvent);
 
 
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
+                currentTick += (ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
 
 
                 /*
@@ -466,9 +469,9 @@ public class Player extends Thread{
                 /*
                  * Adds the noteOn Event to the track
                  */
-                ArrayList<Integer> chordNotes  = ms.getNotes();
-                for (Integer note:
-                     chordNotes) {
+                ArrayList<Integer> chordNotes = ms.getNotes();
+                for (Integer note :
+                        chordNotes) {
                     message = new ShortMessage();
                     message.setMessage(0x90, note, 0x60);
                     midiEvent = new MidiEvent(message, (long) currentTick);
@@ -476,14 +479,13 @@ public class Player extends Thread{
                 }
 
 
-
-                currentTick += ( ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
+                currentTick += (ms.getSymbDuration().getDurationValue() == 4 ? 60 : 30);
 
 
                 /*
                  * Adds the noteOff to all notes that are pressed
                  */
-                for (Integer note:
+                for (Integer note :
                         chordNotes) {
                     message = new ShortMessage();
                     message.setMessage(0x80, note, 0x60);
@@ -493,34 +495,33 @@ public class Player extends Thread{
             }
 
 
-
         }
 
 
         //****  set end of track (meta event) 19 ticks later  ****
         metaMessage = new MetaMessage();
         byte[] bet = {}; // empty array
-        metaMessage.setMessage(0x2F,bet,0);
-        midiEvent = new MidiEvent(metaMessage, (long)140);
+        metaMessage.setMessage(0x2F, bet, 0);
+        midiEvent = new MidiEvent(metaMessage, (long) 140);
         myTrack.add(midiEvent);
 
         //****  write the MIDI sequence to a MIDI file  ****
-        File f = new File(filePath+"\\"+TrackName+".mid");
-        MidiSystem.write(myMIDISequence,1,f);
+        File f = new File(filePath + "\\" + TrackName + ".mid");
+        MidiSystem.write(myMIDISequence, 1, f);
 
 
     }
 
     public void exportToTxt(String filePath) throws CompositionNotLoadedException {
-        if(myComposition == null || myComposition.getMyNotes().size() <= 0){
+        if (myComposition == null || myComposition.getMyNotes().size() <= 0) {
             throw new CompositionNotLoadedException();
         }
         String TrackName = Composition.extractFilename(myComposition.getMyCompositionTxtFile());
         StringBuilder compositionForExport = new StringBuilder();
         ArrayList<MusicSymbol> musicSymbols = myComposition.getMyNotes();
-        for (int i = 0; i < musicSymbols.size(); i++){
-            MusicSymbol temp = musicSymbols.get(i) ;
-            if (temp instanceof Chord){
+        for (int i = 0; i < musicSymbols.size(); i++) {
+            MusicSymbol temp = musicSymbols.get(i);
+            if (temp instanceof Chord) {
                 ArrayList<Integer> chordNotes = temp.getNotes();
                 compositionForExport.append("[");
                 for (Integer a :
@@ -529,15 +530,15 @@ public class Player extends Thread{
                 }
                 compositionForExport.append("]");
 
-            } else if (temp instanceof Note){
-                if (temp.getSymbDuration().getDurationValue() == 8){
+            } else if (temp instanceof Note) {
+                if (temp.getSymbDuration().getDurationValue() == 8) {
                     StringBuilder temporaryBuilder = new StringBuilder();
                     temporaryBuilder.append("[");
                     while (i < musicSymbols.size() && temp.getSymbDuration().getDurationValue() == 8) {
-                        temp = musicSymbols.get(i);
                         char note = Composition.integerToCharacterMapping.get(temp.getNotes().get(0));
-                        temporaryBuilder.append(note+" ");
+                        temporaryBuilder.append(note + " ");
                         i++;
+                        temp = musicSymbols.get(i);
                     }
                     i--;
                     temporaryBuilder.append("]");
@@ -548,14 +549,14 @@ public class Player extends Thread{
                     char note = Composition.integerToCharacterMapping.get(temp.getNotes().get(0));
                     compositionForExport.append(note);
                 }
-            } else if (temp instanceof Pause){
+            } else if (temp instanceof Pause) {
                 compositionForExport.append(temp.getSymbDuration().getDurationValue() == 4 ? " " : " | ");
             }
         }
 
-        try (PrintWriter out = new PrintWriter(filePath+"\\"+TrackName+".txt")) {
+        try (PrintWriter out = new PrintWriter(filePath + "\\" + TrackName + ".txt")) {
             out.println(compositionForExport.toString());
-        } catch (IOException e){
+        } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("Error occured");
             alert.setHeaderText("Error exporting to text");
@@ -565,61 +566,46 @@ public class Player extends Thread{
 
     }
 
-    public static void main(String[] args) throws Exception {
-        Player player = new Player(1);
-        Composition newComposition = new Composition();
-        newComposition.readFromFile("./resource/input/ariana_grande.txt");
-        player.setMyComposition(newComposition);
-
-       //player.exportToMidi();
-        player.playComposition();
+    public void activateKeysWhenFinished(Controller ctrl) {
+        this.ctrl = ctrl;
     }
 
-    private Controller ctrl;
-    public void activateKeysWhenFinished(Controller ctrl){
-            this.ctrl = ctrl;
-    }
-
-    private boolean isPaused = false;
-    private Thread myThread = null;
-    public void setThreadReference(Thread myThread){
+    public void setThreadReference(Thread myThread) {
         this.myThread = myThread;
     }
 
-    private boolean stop = false;
-    public synchronized void pausePlay(){
+    public synchronized void pausePlay() {
         if (!isPaused)
-                isPaused = true;
+            isPaused = true;
     }
-    public synchronized void resumePlay(){
-        if(isPaused)
+
+    public synchronized void resumePlay() {
+        if (isPaused)
             isPaused = false;
         notify();
     }
-    public void stopPlay(){
+
+    public void stopPlay() {
         stop = true;
     }
 
-    public boolean threadReferenceSet(){
+    public boolean threadReferenceSet() {
         return myThread != null;
 
-    }
-
-
-    private Canvas myCanvas;
-
-    public void setMyCanvas(Canvas myCanvas) {
-        this.myCanvas = myCanvas;
     }
 
     public Canvas getMyCanvas() {
         return myCanvas;
     }
 
-    public void updateCurrentNote(){
+    public void setMyCanvas(Canvas myCanvas) {
+        this.myCanvas = myCanvas;
+    }
+
+    public void updateCurrentNote() {
         currentSymbol++;
         print();
-        if (getCurrentSymbol() instanceof Pause){
+        if (getCurrentSymbol() instanceof Pause) {
             updateCurrentNote();
         }
         if (currentSymbol == myComposition.getMyNotes().size()) {
@@ -627,20 +613,21 @@ public class Player extends Thread{
             print();
         }
     }
+
     public MusicSymbol getCurrentSymbol() {
-        if (myComposition.getMyNotes().size() > 0 && currentSymbol < myComposition.getMyNotes().size()){
+        if (myComposition.getMyNotes().size() > 0 && currentSymbol < myComposition.getMyNotes().size()) {
             return myComposition.getMyNotes().get(currentSymbol);
         }
         return null;
     }
 
     public void print() {
-        if(myCanvas != null) {
+        if (myCanvas != null) {
             ArrayList<MusicSymbol> ms = myComposition.getMyNotes();
             GraphicsContext gc = myCanvas.getGraphicsContext2D();
             gc.clearRect(0, 0, myCanvas.getWidth(), myCanvas.getHeight());
             int topOffset = (int) (myCanvas.getHeight() / 2), leftOffset = 0;
-            String output ;
+            String output;
             for (int i = currentSymbol; i < (currentSymbol + 10 > ms.size() ? currentSymbol + (ms.size() - currentSymbol) : currentSymbol + 10); i++) {
 
                 if (ms.get(i) instanceof Pause) {
@@ -672,20 +659,19 @@ public class Player extends Thread{
     public void run() {
         currentSymbol = 0;
         print();
-        if (myComposition != null)
-        {
+        if (myComposition != null) {
             ArrayList<MusicSymbol> compositionNotes = myComposition.getMyNotes();
 
             final int quarterTick = 300;
             final int eightTick = 150;
 
             try {
-                while (!interrupted()){
+                while (!interrupted()) {
 
                     for (MusicSymbol ms :
                             compositionNotes) {
-                        synchronized (this){
-                            while (isPaused){
+                        synchronized (this) {
+                            while (isPaused) {
                                 wait();
                             }
                         }
@@ -704,14 +690,14 @@ public class Player extends Thread{
                         }
                         print();
                         currentSymbol++;
-                        if (stop){
+                        if (stop) {
                             break;
                         }
 
                     }
                     break;
                 }
-            } catch (InterruptedException ex){
+            } catch (InterruptedException ex) {
 
             }
             stop = false;
@@ -732,18 +718,3 @@ public class Player extends Thread{
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-
- */

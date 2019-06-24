@@ -9,6 +9,27 @@ public class Note extends MusicSymbol {
     private String name;
 
 
+    public Note(char noteChar, Duration symbolDuration) {
+        super(symbolDuration);
+
+        keyboardChar = noteChar;
+        midiValue = Composition.charToIntMapping.get(keyboardChar);
+        name = Composition.characterNameMapping.get(keyboardChar);
+    }
+
+    public Note(
+
+            Duration symbDuration,
+            int midiValue,
+            char keyboardChar,
+            String name
+    ) {
+        super(symbDuration);
+        this.midiValue = midiValue;
+        this.keyboardChar = keyboardChar;
+        this.name = name;
+    }
+
     public int getMidiValue() {
         return midiValue;
     }
@@ -33,35 +54,14 @@ public class Note extends MusicSymbol {
         this.name = name;
     }
 
-    public Note(char noteChar, Duration symbolDuration) {
-        super(symbolDuration);
-
-        keyboardChar = noteChar;
-        midiValue = Composition.charToIntMapping.get(keyboardChar);
-        name = Composition.characterNameMapping.get(keyboardChar);
-    }
-
-    public Note(
-
-                Duration symbDuration,
-                int midiValue,
-                char keyboardChar,
-                String name
-    ){
-        super(symbDuration);
-        this.midiValue = midiValue;
-        this.keyboardChar = keyboardChar;
-        this.name = name;
-    }
-
-
     /**
      * Overriden myString from MusicSymbol.class
+     *
      * @return TextFormat for Note
      */
-    protected String myString(){
+    protected String myString() {
         return name;
-    };
+    }
 
 
     /**

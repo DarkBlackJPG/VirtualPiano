@@ -12,19 +12,22 @@ public abstract class MusicSymbol {
     /// Methods
 
     //@Contract(pure = true)
-    public MusicSymbol(Duration symbDuration){
+    public MusicSymbol(Duration symbDuration) {
         this.symbDuration = symbDuration;
     }
+
     /**
      * Gets the symbol duration
+     *
      * @return Returns the Duration object which tells us what type of note/chord/pause this is
      */
     public Duration getSymbDuration() {
-        return  symbDuration;
+        return symbDuration;
     }
 
     /**
      * Changes the duration of MusicSymbol
+     *
      * @param newDuration Duration object used to change the duration of this MusicSymbol
      */
     public void setSymbDuration(Duration newDuration) {
@@ -50,6 +53,7 @@ public abstract class MusicSymbol {
     /**
      * This abstract overrides in child classes because it is used to return the
      * values of its notes
+     *
      * @return ArrayList<Integer> Object which is actually all Midi values for
      * notes
      */
